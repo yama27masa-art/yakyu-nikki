@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>野球日記</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F5F3EE;
+  --surface: #FFFFFF;
+  --surface2: #FAF8F4;
+  --border: #E4DFD5;
+  --border2: #D3CCBE;
+  --navy: #1B2A45;
+  --navy2: #121E33;
+  --navy-light: #EDF0F5;
+  --text: #1C1914;
+  --text2: #6E6A62;
+  --text3: #A69F92;
+  --green: #3A6B4C;
+  --green-light: #EEF4EF;
+  --rust: #B5562C;
+  --rust-light: #FBF0EA;
+  --stitch: #B0402C;
+  --radius: 14px;
+  --radius-sm: 9px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif; -webkit-font-smoothing: antialiased;
+  padding-bottom: 40px;
+}
+.mono { font-family: 'DM Mono', monospace; }
+.disp { font-family: 'Zen Kaku Gothic New', sans-serif; }
+
+/* ── header ── */
+.head {
+  background: var(--navy); color: #fff; padding: 18px 18px 20px;
+  border-bottom: 3px solid var(--stitch);
+}
+.head-eyebrow { font-size: 11px; letter-spacing: 0.12em; color: #AEB9CC; font-weight: 500; margin-bottom: 4px; }
+.head-title { font-family: 'Zen Kaku Gothic New', sans-serif; font-weight: 900; font-size: 22px; letter-spacing: 0.02em; }
+.head-sub { font-size: 12px; color: #C7CEDB; margin-top: 3px; }
+
+.wrap { max-width: 640px; margin: 0 auto; padding: 16px 14px 0; }
+
+/* ── coach player tabs ── */
+.ptabs { display: flex; gap: 7px; overflow-x: auto; padding: 12px 14px 0; scrollbar-width: none; }
+.ptabs::-webkit-scrollbar { display: none; }
+.ptab {
+  flex-shrink: 0; padding: 8px 15px; border-radius: 20px;
+  border: 1px solid var(--border2); background: var(--surface); color: var(--text2);
+  font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all .15s;
+}
+.ptab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+/* ── calendar ── */
+.cal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 16px; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--border); }
+.cal-title { font-weight: 700; font-size: 15px; }
+.cal-nav { display: flex; gap: 4px; }
+.cal-nav button {
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border2);
+  background: var(--surface2); color: var(--text); font-size: 14px; cursor: pointer;
+}
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); padding: 10px; gap: 3px; }
+.cal-dow { text-align: center; font-size: 11px; color: var(--text3); font-weight: 500; padding-bottom: 4px; }
+.cal-cell {
+  aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border-radius: 9px; font-size: 13px; color: var(--text); cursor: pointer; position: relative;
+  font-family: 'DM Mono', monospace; border: 1px solid transparent;
+}
+.cal-cell.out { color: var(--text3); cursor: default; }
+.cal-cell.today { border-color: var(--navy); }
+.cal-cell.selected { background: var(--navy); color: #fff; }
+.cal-cell .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--stitch); margin-top: 2px; }
+.cal-cell .dot.dot-unread { width: 7px; height: 7px; box-shadow: 0 0 0 2px var(--rust-light); }
+.cal-cell.selected .dot { background: #fff; }
+.cal-cell:not(.out):hover { background: var(--navy-light); }
+.cal-cell.selected:hover { background: var(--navy); }
+
+/* ── entry panel ── */
+.panel { margin-top: 16px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.card-label { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+.card.good { border-left: 4px solid var(--green); }
+.card.issue { border-left: 4px solid var(--rust); }
+.card.good .card-label { color: var(--green); }
+.card.issue .card-label { color: var(--rust); }
+textarea {
+  width: 100%; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 10px 12px;
+  font-family: 'Noto Sans JP', sans-serif; font-size: 14px; color: var(--text); resize: vertical; min-height: 64px;
+  background: var(--surface2);
+}
+textarea:focus { outline: none; border-color: var(--navy); background: var(--surface); }
+.video-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.video-item {
+  display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 8px 10px;
+}
+.video-item a { flex: 1; font-size: 13px; color: var(--navy); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.video-item button { border: none; background: none; color: var(--text3); cursor: pointer; font-size: 15px; padding: 2px 4px; }
+.video-add { display: flex; gap: 6px; }
+.video-add input { flex: 1; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 13px; background: var(--surface2); }
+.video-add input:focus { outline: none; border-color: var(--navy); background: var(--surface); }
+.video-add button { border: 1px solid var(--border2); background: var(--surface2); border-radius: var(--radius-sm); padding: 0 12px; font-size: 13px; cursor: pointer; color: var(--text2); }
+.video-count { font-weight: 500; color: var(--text3); margin-left: 4px; }
+.video-limit { font-size: 12px; color: var(--text3); background: var(--surface2); border-radius: var(--radius-sm); padding: 9px 10px; text-align: center; }
+
+.save-row { display: flex; justify-content: flex-end; margin-top: 4px; }
+.save-btn { background: var(--navy); color: #fff; border: none; border-radius: 20px; padding: 10px 22px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.save-btn:active { background: var(--navy2); }
+.save-status { font-size: 12px; color: var(--text3); margin-right: auto; align-self: center; }
+
+/* ── thread (signature stitch element) ── */
+.thread-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.thread-title { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 12px; }
+.thread { position: relative; min-height: 20px; }
+.msg { margin-bottom: 14px; max-width: 88%; }
+.msg.mine { margin-left: auto; }
+.msg-meta { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
+.msg.mine .msg-meta { text-align: right; }
+.msg-bubble { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 9px 12px; font-size: 13.5px; line-height: 1.55; white-space: pre-wrap; }
+.msg.mine .msg-bubble { background: var(--navy-light); border-color: #D8DEE9; }
+.thread-empty { color: var(--text3); font-size: 13px; padding: 4px 0 10px; }
+.thread-input { display: flex; gap: 8px; margin-top: 10px; }
+.thread-input textarea { min-height: 40px; }
+.thread-input button { background: var(--stitch); color: #fff; border: none; border-radius: var(--radius-sm); padding: 0 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.new-badge { display: inline-block; background: var(--stitch); color: #fff; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 8px; margin-left: 4px; vertical-align: middle; }
+.line-btn { display: block; text-align: center; margin-top: 10px; background: #06C755; color: #fff; text-decoration: none; font-size: 13px; font-weight: 700; border-radius: 20px; padding: 10px; }
+
+.empty-hint { text-align: center; color: var(--text3); font-size: 13px; padding: 30px 10px; }
+.err-screen { display: flex; align-items: center; justify-content: center; min-height: 60vh; padding: 30px; text-align: center; color: var(--text2); font-size: 14px; }
+
+/* ── entry screen ── */
+.entry-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: var(--bg); }
+.entry-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; width: 100%; max-width: 320px; text-align: center; }
+.entry-title { font-family: 'Zen Kaku Gothic New', sans-serif; font-weight: 900; font-size: 20px; color: var(--navy); margin-bottom: 6px; }
+.entry-sub { font-size: 12.5px; color: var(--text2); margin-bottom: 18px; line-height: 1.5; }
+.entry-input {
+  width: 100%; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 12px 14px;
+  font-family: 'DM Mono', monospace; font-size: 15px; text-align: center; background: var(--surface2);
+  margin-bottom: 10px;
+}
+.entry-input:focus { outline: none; border-color: var(--navy); background: var(--surface); }
+.entry-err { color: var(--rust); font-size: 12.5px; margin-bottom: 10px; }
+.entry-btn { width: 100%; background: var(--navy); color: #fff; border: none; border-radius: 20px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.switch-code { text-align: center; font-size: 11.5px; color: var(--text3); padding: 14px 0 6px; cursor: pointer; text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDkhejPJk0Nu90dgbsbbhnUWgCHc0mTawM",
+  authDomain: "yakyu-nikki.firebaseapp.com",
+  projectId: "yakyu-nikki",
+  storageBucket: "yakyu-nikki.firebasestorage.app",
+  messagingSenderId: "522594099909",
+  appId: "1:522594099909:web:17fcfb6f96580d6c1486ac"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+async function kvGet(key) {
+  const ref = doc(db, 'kv', key);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  return { value: snap.data().value };
+}
+async function kvSet(key, value) {
+  const ref = doc(db, 'kv', key);
+  await setDoc(ref, { key, value, updatedAt: Date.now() });
+  return true;
+}
+async function kvList(prefix) {
+  const q = query(
+    collection(db, 'kv'),
+    where('key', '>=', prefix),
+    where('key', '<', prefix + '\uf8ff')
+  );
+  const snaps = await getDocs(q);
+  const keys = [];
+  snaps.forEach(d => keys.push(d.id));
+  return { keys };
+}
+const ROSTER = [
+  { id: 'habe', name: '羽部', code: '5tx3qv9u' },
+  { id: 'sakurai', name: '櫻井', code: 'n5fsn3e5' },
+  { id: 'naruwa_haruto', name: '奈良輪 はると', code: '7y6k6td9' },
+  { id: 'naruwa_yuito', name: '奈良輪 ゆいと', code: 'yzdqj9xe' },
+  { id: 'nakagami', name: '中神', code: 'sw7ebv22' },
+];
+const COACH_CODE = 'jvpcn68rds';
+
+const app = document.getElementById('app');
+
+function getSavedCode() {
+  try { return localStorage.getItem('coach_diary_code') || ''; } catch (e) { return ''; }
+}
+function saveCode(c) {
+  try { localStorage.setItem('coach_diary_code', c); } catch (e) { /* ignore */ }
+}
+function resolveCode(code) {
+  const asPlayer = ROSTER.find(r => r.code === code);
+  const isCoach = code === COACH_CODE;
+  return { asPlayer, isCoach };
+}
+
+function showEntryScreen(errorMsg) {
+  app.innerHTML = `
+    <div class="entry-wrap">
+      <div class="entry-card">
+        <div class="entry-title">野球日記</div>
+        <div class="entry-sub">まーしさんからもらったコードを入力してください</div>
+        <input id="code-input" class="entry-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="コードを入力">
+        ${errorMsg ? `<div class="entry-err">${errorMsg}</div>` : ''}
+        <button id="code-submit" class="entry-btn">開く</button>
+      </div>
+    </div>
+  `;
+  const input = document.getElementById('code-input');
+  const submit = () => {
+    const code = input.value.trim();
+    if (!code) return;
+    const { asPlayer, isCoach } = resolveCode(code);
+    if (!asPlayer && !isCoach) {
+      showEntryScreen('コードが正しくありません');
+      return;
+    }
+    saveCode(code);
+    boot(asPlayer, isCoach);
+  };
+  document.getElementById('code-submit').onclick = submit;
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+  input.focus();
+}
+
+const saved = getSavedCode();
+const savedResolved = saved ? resolveCode(saved) : { asPlayer: null, isCoach: false };
+if (savedResolved.asPlayer || savedResolved.isCoach) {
+  boot(savedResolved.asPlayer, savedResolved.isCoach);
+} else {
+  showEntryScreen(null);
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function dateKey(y, m, d) { return `${y}-${pad(m + 1)}-${pad(d)}`; }
+function todayParts() { const t = new Date(); return { y: t.getFullYear(), m: t.getMonth(), d: t.getDate() }; }
+
+async function boot(asPlayer, isCoach) {
+  const today = todayParts();
+  const state = {
+    playerId: isCoach ? ROSTER[0].id : asPlayer.id,
+    role: isCoach ? 'coach' : 'player',
+    year: today.y,
+    month: today.m,
+    selected: dateKey(today.y, today.m, today.d),
+    entry: null,
+    monthDots: new Set(),
+  };
+
+  render();
+
+  async function render() {
+    const player = ROSTER.find(r => r.id === state.playerId);
+    app.innerHTML = `
+      <div class="head">
+        <div class="head-eyebrow">${isCoach ? 'コーチ用ダッシュボード' : '野球日記'}</div>
+        <div class="head-title">${isCoach ? player.name + 'さん' : player.name + 'さん'}</div>
+        <div class="head-sub">${isCoach ? '選手を選んでカレンダーから記録を確認・記入できます' : '練習の記録をつけよう'}</div>
+      </div>
+      <div class="wrap">
+        ${isCoach ? `<div class="ptabs" id="ptabs"></div>` : ''}
+        <div class="cal" id="cal"></div>
+        <div class="panel" id="panel"></div>
+        <div class="switch-code" id="switch-code">別のコードで開く</div>
+      </div>
+    `;
+    document.getElementById('switch-code').onclick = () => {
+      saveCode('');
+      showEntryScreen(null);
+    };
+    if (isCoach) renderTabs();
+    renderCalendar();
+    await loadEntry();
+  }
+
+  function renderTabs() {
+    const wrap = document.getElementById('ptabs');
+    wrap.innerHTML = ROSTER.map(r => `<button class="ptab ${r.id === state.playerId ? 'active' : ''}" data-id="${r.id}">${r.name}</button>`).join('');
+    wrap.querySelectorAll('.ptab').forEach(btn => {
+      btn.onclick = async () => {
+        state.playerId = btn.dataset.id;
+        renderTabs();
+        renderCalendar();
+        await loadEntry();
+      };
+    });
+  }
+
+  async function renderCalendar() {
+    const cal = document.getElementById('cal');
+    const y = state.year, m = state.month;
+    const first = new Date(y, m, 1);
+    const startDow = first.getDay();
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    const prevDays = new Date(y, m, 0).getDate();
+    const dows = ['日', '月', '火', '水', '木', '金', '土'];
+
+    let cells = '';
+    for (let i = 0; i < startDow; i++) {
+      cells += `<div class="cal-cell out">${prevDays - startDow + i + 1}</div>`;
+    }
+    const t = todayParts();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = dateKey(y, m, d);
+      const isToday = t.y === y && t.m === m && t.d === d;
+      const isSel = key === state.selected;
+      cells += `<div class="cal-cell ${isToday ? 'today' : ''} ${isSel ? 'selected' : ''}" data-date="${key}">
+        <span>${d}</span><span class="dot" style="visibility:hidden" data-dot="${key}"></span>
+      </div>`;
+    }
+    const totalCells = startDow + daysInMonth;
+    const trailing = (7 - (totalCells % 7)) % 7;
+    for (let i = 1; i <= trailing; i++) cells += `<div class="cal-cell out">${i}</div>`;
+
+    cal.innerHTML = `
+      <div class="cal-head">
+        <div class="cal-nav"><button id="prevM">‹</button></div>
+        <div class="cal-title">${y}年 ${m + 1}月</div>
+        <div class="cal-nav"><button id="nextM">›</button></div>
+      </div>
+      <div class="cal-grid">
+        ${dows.map(d => `<div class="cal-dow">${d}</div>`).join('')}
+        ${cells}
+      </div>
+    `;
+    document.getElementById('prevM').onclick = async () => {
+      state.month--; if (state.month < 0) { state.month = 11; state.year--; }
+      await renderCalendar();
+    };
+    document.getElementById('nextM').onclick = async () => {
+      state.month++; if (state.month > 11) { state.month = 0; state.year++; }
+      await renderCalendar();
+    };
+    cal.querySelectorAll('.cal-cell[data-date]').forEach(c => {
+      c.onclick = async () => {
+        state.selected = c.dataset.date;
+        const dt = state.selected.split('-');
+        state.year = parseInt(dt[0]); state.month = parseInt(dt[1]) - 1;
+        await renderCalendar();
+        await loadEntry();
+      };
+    });
+
+    // mark dots for this month
+    try {
+      const prefix = `entry:${state.playerId}:${y}-${pad(m + 1)}`;
+      const res = await kvList(prefix);
+      const keys = (res && res.keys) || [];
+      const dateStrs = [];
+      keys.forEach(k => {
+        const dateStr = k.split(':')[2];
+        dateStrs.push(dateStr);
+        const dotEl = cal.querySelector(`[data-dot="${dateStr}"]`);
+        if (dotEl) dotEl.style.visibility = 'visible';
+      });
+      markUnreadDots(dateStrs);
+    } catch (e) { /* no entries this month */ }
+  }
+
+  async function markUnreadDots(dateStrs) {
+    for (const dateStr of dateStrs) {
+      try {
+        const entryRes = await kvGet(`entry:${state.playerId}:${dateStr}`);
+        if (!entryRes || !entryRes.value) continue;
+        const data = JSON.parse(entryRes.value);
+        if (!data.thread || !data.thread.length) continue;
+        const last = data.thread[data.thread.length - 1];
+        if (last.author === state.role) continue;
+        const lastReadEpoch = await getLastRead(state.playerId, dateStr, state.role);
+        if (last.tsRaw && last.tsRaw > lastReadEpoch) {
+          const dotEl = document.querySelector(`[data-dot="${dateStr}"]`);
+          if (dotEl) { dotEl.style.visibility = 'visible'; dotEl.classList.add('dot-unread'); }
+        }
+      } catch (e) { /* skip */ }
+    }
+  }
+
+  async function getLastRead(playerId, date, role) {
+    try {
+      const res = await kvGet(`lastread:${playerId}:${date}:${role}`);
+      if (res && res.value) return parseInt(res.value, 10) || 0;
+    } catch (e) { /* none yet */ }
+    return 0;
+  }
+  async function setLastRead(playerId, date, role) {
+    try {
+      await kvSet(`lastread:${playerId}:${date}:${role}`, String(Date.now()));
+    } catch (e) { /* ignore */ }
+  }
+
+  async function loadEntry() {
+    const panel = document.getElementById('panel');
+    panel.innerHTML = `<div class="empty-hint">読み込み中…</div>`;
+    const key = `entry:${state.playerId}:${state.selected}`;
+    let data = null;
+    try {
+      const res = await kvGet(key);
+      if (res && res.value) data = JSON.parse(res.value);
+    } catch (e) { data = null; }
+    if (!data) data = { menu: '', good: '', issue: '', videos: [], thread: [] };
+    state.entry = data;
+    state.lastReadEpoch = await getLastRead(state.playerId, state.selected, state.role);
+    renderPanel();
+    setLastRead(state.playerId, state.selected, state.role);
+  }
+
+  function renderPanel() {
+    const panel = document.getElementById('panel');
+    const e = state.entry;
+    panel.innerHTML = `
+      <div class="card">
+        <div class="card-label">練習メニュー</div>
+        <textarea id="f-menu" placeholder="今日やった練習内容を書こう">${escapeHtml(e.menu)}</textarea>
+      </div>
+      <div class="card good">
+        <div class="card-label">◎ 意識したこと・良かった点</div>
+        <textarea id="f-good" placeholder="意識したことや、うまくいったこと">${escapeHtml(e.good)}</textarea>
+      </div>
+      <div class="card issue">
+        <div class="card-label">△ 課題点</div>
+        <textarea id="f-issue" placeholder="難しかったこと、次に直したいこと">${escapeHtml(e.issue)}</textarea>
+      </div>
+      <div class="card">
+        <div class="card-label">おすすめ動画</div>
+        <div class="video-list" id="video-list">
+          ${e.videos.map((v, i) => `
+            <div class="video-item">
+              <a href="${escapeAttr(v.url)}" target="_blank" rel="noopener">${escapeHtml(v.title || v.url)}</a>
+              <button data-i="${i}" class="video-del">✕</button>
+            </div>
+          `).join('') || '<div class="thread-empty">まだ動画はありません</div>'}
+        </div>
+        <div class="video-add">
+          <input id="v-title" placeholder="タイトル（任意）">
+          <input id="v-url" placeholder="URLを貼り付け">
+          <button id="v-add">追加</button>
+        </div>
+      </div>
+      <div class="save-row">
+        <span class="save-status" id="save-status"></span>
+        <button class="save-btn" id="save-btn">保存する</button>
+      </div>
+      <div class="thread-card">
+        <div class="thread-title">やり取り</div>
+        <div class="thread" id="thread">
+          ${e.thread.length ? e.thread.map(m => threadMsgHtml(m)).join('') : '<div class="thread-empty">まだやり取りはありません</div>'}
+        </div>
+        <div class="thread-input">
+          <textarea id="t-input" placeholder="${state.role === 'coach' ? 'コーチからひとこと' : 'わからないことがあったら記入してみよう'}"></textarea>
+          <button id="t-send">送信</button>
+        </div>
+        <div id="line-notify"></div>
+      </div>
+    `;
+
+    document.getElementById('v-add').onclick = () => {
+      const title = document.getElementById('v-title').value.trim();
+      const url = document.getElementById('v-url').value.trim();
+      if (!url) return;
+      state.entry.videos.push({ title, url });
+      renderPanel();
+    };
+    panel.querySelectorAll('.video-del').forEach(btn => {
+      btn.onclick = () => {
+        state.entry.videos.splice(parseInt(btn.dataset.i), 1);
+        renderPanel();
+      };
+    });
+    document.getElementById('save-btn').onclick = () => saveEntry();
+    document.getElementById('t-send').onclick = () => sendThread();
+  }
+
+  function threadMsgHtml(m) {
+    const mine = m.author === state.role;
+    const label = m.author === 'coach' ? 'まーしさん' : (isCoach ? ROSTER.find(r => r.id === state.playerId).name : '自分');
+    const isNew = !mine && m.tsRaw && m.tsRaw > (state.lastReadEpoch || 0);
+    return `<div class="msg ${mine ? 'mine' : ''}">
+      <div class="msg-meta">${label} ・ ${m.ts} ${isNew ? '<span class="new-badge">NEW</span>' : ''}</div>
+      <div class="msg-bubble">${escapeHtml(m.text)}</div>
+    </div>`;
+  }
+
+  async function saveEntry(silent) {
+    state.entry.menu = document.getElementById('f-menu').value;
+    state.entry.good = document.getElementById('f-good').value;
+    state.entry.issue = document.getElementById('f-issue').value;
+    const key = `entry:${state.playerId}:${state.selected}`;
+    const status = document.getElementById('save-status');
+    if (status) status.textContent = '保存中…';
+    try {
+      await kvSet(key, JSON.stringify(state.entry));
+      if (status) status.textContent = '保存しました';
+      // refresh dot on calendar without full reload
+      const dotEl = document.querySelector(`[data-dot="${state.selected}"]`);
+      if (dotEl) dotEl.style.visibility = 'visible';
+    } catch (e) {
+      if (status) status.textContent = '保存に失敗しました';
+    }
+  }
+
+  async function sendThread() {
+    const input = document.getElementById('t-input');
+    const text = input.value.trim();
+    if (!text) return;
+    const now = new Date();
+    const ts = `${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    state.entry.thread.push({ author: state.role, text, ts, tsRaw: now.getTime() });
+    input.value = '';
+    await saveEntry();
+    await setLastRead(state.playerId, state.selected, state.role);
+    renderPanel();
+    showLineNotify();
+  }
+
+  function showLineNotify() {
+    const box = document.getElementById('line-notify');
+    if (!box) return;
+    const player = ROSTER.find(r => r.id === state.playerId);
+    const who = state.role === 'coach' ? player.name + 'さん' : 'まーしさん';
+    const msg = `野球日記（${player.name}さん・${state.selected}）に書き込みしたよ。見てね！`;
+    const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(msg)}`;
+    box.innerHTML = `<a class="line-btn" href="${lineUrl}" target="_blank" rel="noopener">${who}にLINEで知らせる</a>`;
+  }
+
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function escapeAttr(s) { return escapeHtml(s); }
+}
+</script>
+</body>
+</html>
