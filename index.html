@@ -102,10 +102,10 @@ textarea:focus { outline: none; border-color: var(--navy); background: var(--sur
 }
 .video-item a { flex: 1; font-size: 13px; color: var(--navy); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .video-item button { border: none; background: none; color: var(--text3); cursor: pointer; font-size: 15px; padding: 2px 4px; }
-.video-add { display: flex; gap: 6px; }
-.video-add input { flex: 1; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 13px; background: var(--surface2); }
+.video-add { display: flex; gap: 6px; flex-wrap: wrap; }
+.video-add input { flex: 1 1 120px; min-width: 0; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 13px; background: var(--surface2); }
 .video-add input:focus { outline: none; border-color: var(--navy); background: var(--surface); }
-.video-add button { border: 1px solid var(--border2); background: var(--surface2); border-radius: var(--radius-sm); padding: 0 12px; font-size: 13px; cursor: pointer; color: var(--text2); }
+.video-add button { flex-shrink: 0; white-space: nowrap; border: 1px solid var(--border2); background: var(--surface2); border-radius: var(--radius-sm); padding: 0 14px; font-size: 13px; cursor: pointer; color: var(--text2); }
 .video-count { font-weight: 500; color: var(--text3); margin-left: 4px; }
 .video-limit { font-size: 12px; color: var(--text3); background: var(--surface2); border-radius: var(--radius-sm); padding: 9px 10px; text-align: center; }
 
@@ -126,8 +126,8 @@ textarea:focus { outline: none; border-color: var(--navy); background: var(--sur
 .msg.mine .msg-bubble { background: var(--navy-light); border-color: #D8DEE9; }
 .thread-empty { color: var(--text3); font-size: 13px; padding: 4px 0 10px; }
 .thread-input { display: flex; gap: 8px; margin-top: 10px; }
-.thread-input textarea { min-height: 40px; }
-.thread-input button { background: var(--stitch); color: #fff; border: none; border-radius: var(--radius-sm); padding: 0 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.thread-input textarea { min-height: 40px; flex: 1; min-width: 0; }
+.thread-input button { flex-shrink: 0; white-space: nowrap; align-self: flex-end; background: var(--stitch); color: #fff; border: none; border-radius: var(--radius-sm); padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
 .new-badge { display: inline-block; background: var(--stitch); color: #fff; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 8px; margin-left: 4px; vertical-align: middle; }
 .line-btn { display: block; text-align: center; margin-top: 10px; background: #06C755; color: #fff; text-decoration: none; font-size: 13px; font-weight: 700; border-radius: 20px; padding: 10px; }
 
