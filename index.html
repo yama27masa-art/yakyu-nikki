@@ -277,7 +277,7 @@ async function boot(asPlayer, isCoach) {
     app.innerHTML = `
       <div class="head">
         <div class="head-eyebrow">${isCoach ? 'コーチ用ダッシュボード' : '野球日記'}</div>
-        <div class="head-title">${isCoach ? player.name + 'さん' : player.name + 'さん'}</div>
+        <div class="head-title" id="head-title">${isCoach ? player.name + 'さん' : player.name + 'さん'}</div>
         <div class="head-sub">${isCoach ? '選手を選んでカレンダーから記録を確認・記入できます' : '練習の記録をつけよう'}</div>
       </div>
       <div class="wrap">
@@ -302,6 +302,8 @@ async function boot(asPlayer, isCoach) {
     wrap.querySelectorAll('.ptab').forEach(btn => {
       btn.onclick = async () => {
         state.playerId = btn.dataset.id;
+        const titleEl = document.getElementById('head-title');
+        if (titleEl) titleEl.textContent = ROSTER.find(r => r.id === state.playerId).name + 'さん';
         renderTabs();
         renderCalendar();
         await loadEntry();
