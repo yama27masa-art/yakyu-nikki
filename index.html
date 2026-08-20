@@ -468,7 +468,7 @@ async function boot(asPlayer, isCoach) {
           ${e.thread.length ? e.thread.map(m => threadMsgHtml(m)).join('') : '<div class="thread-empty">まだやり取りはありません</div>'}
         </div>
         <div class="thread-input">
-          <textarea id="t-input" placeholder="${state.role === 'coach' ? 'コーチからひとこと' : 'わからないことがあったら記入してみよう'}"></textarea>
+          <textarea id="t-input" placeholder="わからないことがあったら書いてみよう"></textarea>
           <button id="t-send">送信</button>
         </div>
         <div id="line-notify"></div>
