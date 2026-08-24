@@ -204,6 +204,7 @@ const ROSTER = [
   { id: 'muranaga', name: '村永ゆうま', code: '4ys543ta' },
 ];
 const COACH_CODE = 'jvpcn68rds';
+const SITE_URL = 'https://yama27masa-art.github.io/yakyu-nikki/';
 
 const app = document.getElementById('app');
 
@@ -567,7 +568,8 @@ async function boot(asPlayer, isCoach) {
     if (!box) return;
     const player = ROSTER.find(r => r.id === state.playerId);
     const who = state.role === 'coach' ? player.name + 'さん' : 'まーしさん';
-    const msg = `野球日記（${player.name}さん・${state.selected}）に書き込みしたよ。見てね！`;
+    const recipientCode = state.role === 'coach' ? player.code : COACH_CODE;
+    const msg = `野球日記（${player.name}さん・${state.selected}）に書き込みしたよ。見てね！\n${SITE_URL}\nコード: ${recipientCode}`;
     const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(msg)}`;
     box.innerHTML = `<a class="line-btn" href="${lineUrl}" target="_blank" rel="noopener">${who}にLINEで知らせる</a>`;
   }
