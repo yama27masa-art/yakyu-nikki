@@ -568,8 +568,7 @@ async function boot(asPlayer, isCoach) {
     if (!box) return;
     const player = ROSTER.find(r => r.id === state.playerId);
     const who = state.role === 'coach' ? player.name + 'さん' : 'まーしさん';
-    const recipientCode = state.role === 'coach' ? player.code : COACH_CODE;
-    const msg = `野球日記（${player.name}さん・${state.selected}）に書き込みしたよ。見てね！\n${SITE_URL}\nコード: ${recipientCode}`;
+    const msg = `野球日記（${player.name}さん・${state.selected}）に書き込みしたよ。見てね！\n${SITE_URL}`;
     const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(msg)}`;
     box.innerHTML = `<a class="line-btn" href="${lineUrl}" target="_blank" rel="noopener">${who}にLINEで知らせる</a>`;
   }
