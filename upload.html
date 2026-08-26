@@ -93,6 +93,8 @@ input[type=file] { display: none; }
 }
 .add-btn:disabled { opacity: .4; cursor: not-allowed; }
 
+.line-btn { display: block; text-align: center; margin-top: 12px; background: #06C755; color: #fff; text-decoration: none; font-size: 13px; font-weight: 700; border-radius: 20px; padding: 10px; }
+
 .footer-note { text-align: center; font-size: 11px; color: var(--text3); margin: 18px 0 0; line-height: 1.8; }
 </style>
 </head>
@@ -140,6 +142,7 @@ input[type=file] { display: none; }
       <div class="status-txt" id="statusTxt">準備中…</div>
     </div>
     <div class="err" id="errorBox"></div>
+    <div id="line-notify"></div>
 
     <div class="card-label" style="margin-top:16px;">この日の動画</div>
     <div class="added-list" id="added-list"><div class="added-empty">読み込み中…</div></div>
@@ -186,6 +189,7 @@ const ROSTER = [
 ];
 
 const COACH_CODE = 'jvpcn68rds';
+const SITE_URL = 'https://yama27masa-art.github.io/yakyu-nikki/';
 
 const codeInput = document.getElementById('code-input');
 const codeConfirm = document.getElementById('code-confirm');
@@ -268,6 +272,8 @@ function resetFileSelection() {
   if (typeof fileInput !== 'undefined') fileInput.value = '';
   if (typeof filenameEl !== 'undefined') filenameEl.textContent = '';
   if (typeof addBtn !== 'undefined') addBtn.disabled = true;
+  const box = document.getElementById('line-notify');
+  if (box) box.innerHTML = '';
 }
 
 async function refreshAddedList() {
@@ -371,6 +377,7 @@ async function handleUpload(file){
     filenameEl.textContent = '';
     selectedFile = null;
     await refreshAddedList();
+    showLineNotify(url);
     setTimeout(() => board.classList.remove('show'), 1500);
   } catch (err) {
     console.error(err);
@@ -420,6 +427,16 @@ async function addVideoToEntry(title, url) {
   if (!entry.videos) entry.videos = [];
   entry.videos.push({ title: title || '', url });
   await kvSet(key, JSON.stringify(entry));
+}
+
+function showLineNotify(videoUrl) {
+  const box = document.getElementById('line-notify');
+  if (!box) return;
+  const player = ROSTER.find(r => r.id === currentPlayerId);
+  const who = isCoach ? (player ? player.name + 'さん' : '選手') : 'まーしさん';
+  const msg = `野球日記（${player ? player.name + 'さん・' : ''}${dateInput.value}）に動画を追加したよ。見てね！\n${SITE_URL}\n\n動画はこちらから👇\n${videoUrl}`;
+  const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(msg)}`;
+  box.innerHTML = `<a class="line-btn" href="${lineUrl}" target="_blank" rel="noopener">${who}にLINEで知らせる</a>`;
 }
 </script>
 </body>
