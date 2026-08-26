@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>動画アップロード | 野球日記</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F5F3EE;
+  --surface: #FFFFFF;
+  --surface2: #FAF8F4;
+  --border: #E4DFD5;
+  --border2: #D3CCBE;
+  --navy: #1B2A45;
+  --navy-light: #EDF0F5;
+  --text: #1C1914;
+  --text2: #6E6A62;
+  --text3: #A69F92;
+  --green: #3A6B4C;
+  --green-light: #EEF4EF;
+  --rust: #B5562C;
+  --rust-light: #FBF0EA;
+  --stitch: #B0402C;
+  --amber: #C98A2E;
+  --radius: 14px;
+  --radius-sm: 9px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif; -webkit-font-smoothing: antialiased;
+  padding-bottom: 40px;
+}
+.head {
+  background: var(--navy); color: #fff; padding: 14px 18px 15px;
+  border-bottom: 3px solid var(--stitch);
+}
+.head-eyebrow { font-size: 10px; letter-spacing: 0.12em; color: #AEB9CC; font-weight: 500; margin-bottom: 2px; }
+.head-title { font-family: 'Zen Kaku Gothic New', sans-serif; font-weight: 900; font-size: 18px; letter-spacing: 0.02em; }
+.head-sub { font-size: 11px; color: #C7CEDB; margin-top: 2px; }
+.wrap { max-width: 520px; margin: 0 auto; padding: 14px 14px 0; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.card-label { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.step-num { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:var(--navy); color:#fff; font-size:10.5px; font-weight:700; font-family:'DM Mono',monospace; }
+.card.locked { opacity: 0.45; pointer-events: none; }
+
+select, input[type=text], input[type=password], input[type=date] {
+  width: 100%; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 10px 12px;
+  font-family: 'Noto Sans JP', sans-serif; font-size: 14px; color: var(--text);
+  background: var(--surface2);
+}
+select:focus, input:focus { outline: none; border-color: var(--navy); background: var(--surface); }
+
+.code-row { display: flex; gap: 8px; }
+.code-row input { flex: 1; font-family:'DM Mono',monospace; letter-spacing:0.05em; }
+.code-row button { flex-shrink: 0; background: var(--navy); color: #fff; border: none; border-radius: var(--radius-sm); padding: 0 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.code-row button:disabled { opacity: .5; cursor: not-allowed; }
+.code-msg { font-size: 12px; margin-top: 8px; min-height: 14px; }
+.code-msg.ok { color: var(--green); }
+.code-msg.ng { color: var(--rust); }
+
+.drop {
+  border: 2px dashed var(--border2); border-radius: 12px; padding: 26px 14px; text-align: center;
+  cursor: pointer; transition: border-color .15s, background .15s; background: var(--surface2); margin-top: 10px;
+}
+.drop:hover, .drop.drag { border-color: var(--navy); background: var(--navy-light); }
+.drop .icon { font-size: 26px; display: block; margin-bottom: 6px; }
+.drop .main-txt { font-weight: 700; font-size: 13.5px; color: var(--text); }
+.drop .sub-txt { font-size: 11px; color: var(--text3); margin-top: 2px; }
+input[type=file] { display: none; }
+.filename { margin-top: 8px; font-size: 12.5px; color: var(--navy); word-break: break-all; }
+
+.board { margin-top: 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: none; }
+.board.show { display: block; }
+.track { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.fill { height: 100%; width: 0%; background: var(--amber); transition: width .15s linear; }
+.status-txt { margin-top: 6px; font-size: 11.5px; color: var(--text2); text-align: center; }
+
+.err { margin-top: 10px; display: none; background: var(--rust-light); border: 1px solid #E7C4B6; border-radius: 8px; padding: 10px 12px; font-size: 12.5px; color: var(--stitch); line-height: 1.6; }
+.err.show { display: block; }
+
+.added-list { margin-top: 6px; display: flex; flex-direction: column; gap: 6px; }
+.added-item { display: flex; align-items: center; gap: 8px; background: var(--green-light); border: 1px solid #CFE2D5; border-radius: var(--radius-sm); padding: 8px 10px; font-size: 12.5px; color: var(--green); }
+.added-item a { color: var(--navy); text-decoration: none; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.added-empty { font-size: 12px; color: var(--text3); padding: 4px 0; }
+
+.footer-note { text-align: center; font-size: 11px; color: var(--text3); margin: 18px 0 0; line-height: 1.8; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div class="head-eyebrow">Yakyu Nikki Tool</div>
+  <div class="head-title">動画アップロード</div>
+  <div class="head-sub">コードを入れると、あなたの野球日記に動画が直接追加されます</div>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <div class="card-label"><span class="step-num">1</span>コードを入力</div>
+    <div class="code-row">
+      <input type="password" id="code-input" placeholder="あなたのコード（まーしさんからもらったもの）" autocomplete="off">
+      <button id="code-confirm">確認</button>
+    </div>
+    <div class="code-msg" id="code-msg"></div>
+    <select id="coach-player-select" style="display:none; margin-top:10px;">
+      <option value="">追加する選手を選んでください</option>
+    </select>
+  </div>
+
+  <div class="card locked" id="card-date">
+    <div class="card-label"><span class="step-num">2</span>日付を選ぶ</div>
+    <input type="date" id="date-input">
+  </div>
+
+  <div class="card locked" id="card-video">
+    <div class="card-label"><span class="step-num">3</span>動画を追加</div>
+    <input type="text" id="v-title" placeholder="タイトル（任意）" style="margin-bottom:8px;">
+    <div class="drop" id="drop">
+      <span class="icon">🎥</span>
+      <div class="main-txt">タップして動画を選ぶ</div>
+      <div class="sub-txt">またはドラッグ＆ドロップ（最大200MB）</div>
+    </div>
+    <input type="file" id="fileInput" accept="video/*">
+    <div class="filename" id="filename"></div>
+
+    <div class="board" id="board">
+      <div class="track"><div class="fill" id="fill"></div></div>
+      <div class="status-txt" id="statusTxt">準備中…</div>
+    </div>
+    <div class="err" id="errorBox"></div>
+
+    <div class="card-label" style="margin-top:16px;">この日の動画</div>
+    <div class="added-list" id="added-list"><div class="added-empty">読み込み中…</div></div>
+  </div>
+
+  <p class="footer-note">動画は catbox.moe にアップロードされ、URLが野球日記（Firestore）に直接追加されます。<br>登録済みの動画を削除・編集したい場合は、野球日記アプリ本体から行ってください。</p>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDkhejPJk0Nu90dgbsbbhnUWgCHc0mTawM",
+  authDomain: "yakyu-nikki.firebaseapp.com",
+  projectId: "yakyu-nikki",
+  storageBucket: "yakyu-nikki.firebasestorage.app",
+  messagingSenderId: "522594099909",
+  appId: "1:522594099909:web:17fcfb6f96580d6c1486ac"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+async function kvGet(key) {
+  const ref = doc(db, 'kv', key);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  return { value: snap.data().value };
+}
+async function kvSet(key, value) {
+  const ref = doc(db, 'kv', key);
+  await setDoc(ref, { key, value, updatedAt: Date.now() });
+  return true;
+}
+
+const ROSTER = [
+  { id: 'habe', name: '羽部', code: '5tx3qv9u' },
+  { id: 'sakurai', name: '櫻井', code: 'n5fsn3e5' },
+  { id: 'naruwa_haruto', name: '奈良輪 はると', code: '7y6k6td9' },
+  { id: 'naruwa_yuito', name: '奈良輪 ゆいと', code: 'yzdqj9xe' },
+  { id: 'nakagami', name: '中神', code: 'sw7ebv22' },
+  { id: 'okajima', name: '岡島諒', code: 'zuvbwzzm' },
+  { id: 'muranaga', name: '村永ゆうま', code: '4ys543ta' },
+];
+
+const COACH_CODE = 'jvpcn68rds';
+
+const codeInput = document.getElementById('code-input');
+const codeConfirm = document.getElementById('code-confirm');
+const codeMsg = document.getElementById('code-msg');
+const coachPlayerSelect = document.getElementById('coach-player-select');
+const cardDate = document.getElementById('card-date');
+const cardVideo = document.getElementById('card-video');
+const dateInput = document.getElementById('date-input');
+
+ROSTER.forEach(r => {
+  const opt = document.createElement('option');
+  opt.value = r.id; opt.textContent = r.name;
+  coachPlayerSelect.appendChild(opt);
+});
+
+let unlocked = false;
+let isCoach = false;
+let currentPlayerId = null;
+
+function pad(n){ return String(n).padStart(2,'0'); }
+function todayStr(){ const t = new Date(); return `${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`; }
+dateInput.value = todayStr();
+
+function relock() {
+  unlocked = false;
+  currentPlayerId = null;
+  cardDate.classList.add('locked');
+  cardVideo.classList.add('locked');
+}
+
+function tryUnlockAsPlayer(player) {
+  unlocked = true;
+  isCoach = false;
+  currentPlayerId = player.id;
+  coachPlayerSelect.style.display = 'none';
+  codeMsg.textContent = `${player.name}さんとして追加します`;
+  codeMsg.className = 'code-msg ok';
+  cardDate.classList.remove('locked');
+  cardVideo.classList.remove('locked');
+  refreshAddedList();
+}
+
+codeConfirm.addEventListener('click', () => {
+  const code = codeInput.value.trim();
+  const player = ROSTER.find(r => r.code === code);
+  if (player) {
+    tryUnlockAsPlayer(player);
+    return;
+  }
+  if (code === COACH_CODE) {
+    isCoach = true;
+    unlocked = false;
+    currentPlayerId = null;
+    codeMsg.textContent = 'コーチとして確認できました。追加する選手を選んでください';
+    codeMsg.className = 'code-msg ok';
+    coachPlayerSelect.style.display = 'block';
+    cardDate.classList.add('locked');
+    cardVideo.classList.add('locked');
+    return;
+  }
+  relock();
+  codeMsg.textContent = 'コードが正しくありません';
+  codeMsg.className = 'code-msg ng';
+});
+
+coachPlayerSelect.addEventListener('change', () => {
+  const playerId = coachPlayerSelect.value;
+  if (!playerId || !isCoach) return;
+  unlocked = true;
+  currentPlayerId = playerId;
+  cardDate.classList.remove('locked');
+  cardVideo.classList.remove('locked');
+  refreshAddedList();
+});
+
+dateInput.addEventListener('change', () => { if (unlocked) refreshAddedList(); });
+
+async function refreshAddedList() {
+  const list = document.getElementById('added-list');
+  list.innerHTML = '<div class="added-empty">読み込み中…</div>';
+  try {
+    const key = `entry:${currentPlayerId}:${dateInput.value}`;
+    const res = await kvGet(key);
+    const data = res && res.value ? JSON.parse(res.value) : { videos: [] };
+    const videos = data.videos || [];
+    if (!videos.length) {
+      list.innerHTML = '<div class="added-empty">まだ動画はありません</div>';
+    } else {
+      list.innerHTML = videos.map(v => `
+        <div class="added-item">✓ <a href="${v.url}" target="_blank" rel="noopener">${escapeHtml(v.title || v.url)}</a></div>
+      `).join('');
+    }
+  } catch (e) {
+    list.innerHTML = '<div class="added-empty">読み込みに失敗しました</div>';
+  }
+}
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+// ── video upload ──
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('fileInput');
+const filenameEl = document.getElementById('filename');
+const board = document.getElementById('board');
+const fill = document.getElementById('fill');
+const statusTxt = document.getElementById('statusTxt');
+const errorBox = document.getElementById('errorBox');
+const vTitle = document.getElementById('v-title');
+
+drop.addEventListener('click', () => { if (unlocked) fileInput.click(); });
+drop.addEventListener('dragover', (e) => { e.preventDefault(); if (unlocked) drop.classList.add('drag'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+drop.addEventListener('drop', (e) => {
+  e.preventDefault();
+  drop.classList.remove('drag');
+  if (unlocked && e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+
+function showError(msg){ errorBox.textContent = msg; errorBox.classList.add('show'); }
+function hideError(){ errorBox.classList.remove('show'); }
+
+async function handleFile(file){
+  hideError();
+  if (!file.type.startsWith('video/')) { showError('動画ファイルを選んでください。'); return; }
+  if (file.size > 200*1024*1024) { showError('ファイルサイズが200MBを超えています。'); return; }
+  filenameEl.textContent = `${file.name}（${(file.size/1024/1024).toFixed(1)}MB）`;
+  board.classList.add('show');
+  fill.style.width = '0%';
+  statusTxt.textContent = 'アップロード準備中…';
+
+  try {
+    const url = await uploadToCatbox(file, (pct) => {
+      fill.style.width = pct + '%';
+      statusTxt.textContent = `アップロード中… ${pct}%`;
+    });
+    statusTxt.textContent = '野球日記に追加中…';
+    await addVideoToEntry(vTitle.value.trim(), url);
+    statusTxt.textContent = '追加しました！';
+    fill.style.width = '100%';
+    vTitle.value = '';
+    fileInput.value = '';
+    filenameEl.textContent = '';
+    await refreshAddedList();
+    setTimeout(() => board.classList.remove('show'), 1500);
+  } catch (err) {
+    console.error(err);
+    board.classList.remove('show');
+    showError('失敗しました。もう一度お試しください。（' + (err.message || err) + '）');
+  }
+}
+
+function uploadToCatbox(file, onProgress){
+  return new Promise((resolve, reject) => {
+    const formData = new FormData();
+    formData.append('reqtype', 'fileupload');
+    formData.append('fileToUpload', file);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://catbox.moe/user/api.php', true);
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded/e.total)*100)); };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300){
+        const text = xhr.responseText.trim();
+        if (text.startsWith('http')) resolve(text);
+        else reject(new Error(text || '不明なエラー'));
+      } else reject(new Error('HTTP ' + xhr.status));
+    };
+    xhr.onerror = () => reject(new Error('ネットワークエラー'));
+    xhr.send(formData);
+  });
+}
+
+async function addVideoToEntry(title, url) {
+  const key = `entry:${currentPlayerId}:${dateInput.value}`;
+  let entry;
+  try {
+    const res = await kvGet(key);
+    entry = res && res.value ? JSON.parse(res.value) : null;
+  } catch (e) { entry = null; }
+  if (!entry) entry = { menu: '', good: '', issue: '', videos: [], thread: [] };
+  if (!entry.videos) entry.videos = [];
+  entry.videos.push({ title: title || '', url });
+  await kvSet(key, JSON.stringify(entry));
+}
+</script>
+</body>
+</html>
