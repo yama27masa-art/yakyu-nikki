@@ -84,7 +84,14 @@ input[type=file] { display: none; }
 .added-list { margin-top: 6px; display: flex; flex-direction: column; gap: 6px; }
 .added-item { display: flex; align-items: center; gap: 8px; background: var(--green-light); border: 1px solid #CFE2D5; border-radius: var(--radius-sm); padding: 8px 10px; font-size: 12.5px; color: var(--green); }
 .added-item a { color: var(--navy); text-decoration: none; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.added-item .del-btn { flex-shrink: 0; border: none; background: none; color: var(--rust); font-size: 15px; cursor: pointer; padding: 2px 4px; }
 .added-empty { font-size: 12px; color: var(--text3); padding: 4px 0; }
+
+.add-btn {
+  width: 100%; margin-top: 10px; padding: 12px; border: none; border-radius: var(--radius-sm);
+  background: var(--navy); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.add-btn:disabled { opacity: .4; cursor: not-allowed; }
 
 .footer-note { text-align: center; font-size: 11px; color: var(--text3); margin: 18px 0 0; line-height: 1.8; }
 </style>
@@ -126,6 +133,7 @@ input[type=file] { display: none; }
     </div>
     <input type="file" id="fileInput" accept="video/*">
     <div class="filename" id="filename"></div>
+    <button class="add-btn" id="add-btn" disabled>追加する</button>
 
     <div class="board" id="board">
       <div class="track"><div class="fill" id="fill"></div></div>
@@ -253,7 +261,14 @@ coachPlayerSelect.addEventListener('change', () => {
   refreshAddedList();
 });
 
-dateInput.addEventListener('change', () => { if (unlocked) refreshAddedList(); });
+dateInput.addEventListener('change', () => { if (unlocked) { resetFileSelection(); refreshAddedList(); } });
+
+function resetFileSelection() {
+  selectedFile = null;
+  if (typeof fileInput !== 'undefined') fileInput.value = '';
+  if (typeof filenameEl !== 'undefined') filenameEl.textContent = '';
+  if (typeof addBtn !== 'undefined') addBtn.disabled = true;
+}
 
 async function refreshAddedList() {
   const list = document.getElementById('added-list');
@@ -266,12 +281,32 @@ async function refreshAddedList() {
     if (!videos.length) {
       list.innerHTML = '<div class="added-empty">まだ動画はありません</div>';
     } else {
-      list.innerHTML = videos.map(v => `
-        <div class="added-item">✓ <a href="${v.url}" target="_blank" rel="noopener">${escapeHtml(v.title || v.url)}</a></div>
+      list.innerHTML = videos.map((v, i) => `
+        <div class="added-item">✓ <a href="${v.url}" target="_blank" rel="noopener">${escapeHtml(v.title || v.url)}</a>
+          <button class="del-btn" data-i="${i}" title="削除">✕</button>
+        </div>
       `).join('');
+      list.querySelectorAll('.del-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteVideo(parseInt(btn.dataset.i, 10)));
+      });
     }
   } catch (e) {
     list.innerHTML = '<div class="added-empty">読み込みに失敗しました</div>';
+  }
+}
+
+async function deleteVideo(index) {
+  if (!confirm('この動画を削除しますか？')) return;
+  const key = `entry:${currentPlayerId}:${dateInput.value}`;
+  try {
+    const res = await kvGet(key);
+    const entry = res && res.value ? JSON.parse(res.value) : null;
+    if (!entry || !entry.videos) return;
+    entry.videos.splice(index, 1);
+    await kvSet(key, JSON.stringify(entry));
+    await refreshAddedList();
+  } catch (e) {
+    alert('削除に失敗しました。もう一度お試しください。');
   }
 }
 function escapeHtml(s) {
@@ -282,11 +317,14 @@ function escapeHtml(s) {
 const drop = document.getElementById('drop');
 const fileInput = document.getElementById('fileInput');
 const filenameEl = document.getElementById('filename');
+const addBtn = document.getElementById('add-btn');
 const board = document.getElementById('board');
 const fill = document.getElementById('fill');
 const statusTxt = document.getElementById('statusTxt');
 const errorBox = document.getElementById('errorBox');
 const vTitle = document.getElementById('v-title');
+
+let selectedFile = null;
 
 drop.addEventListener('click', () => { if (unlocked) fileInput.click(); });
 drop.addEventListener('dragover', (e) => { e.preventDefault(); if (unlocked) drop.classList.add('drag'); });
@@ -294,18 +332,27 @@ drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
 drop.addEventListener('drop', (e) => {
   e.preventDefault();
   drop.classList.remove('drag');
-  if (unlocked && e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  if (unlocked && e.dataTransfer.files.length) selectFile(e.dataTransfer.files[0]);
 });
-fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+fileInput.addEventListener('change', () => { if (fileInput.files.length) selectFile(fileInput.files[0]); });
 
 function showError(msg){ errorBox.textContent = msg; errorBox.classList.add('show'); }
 function hideError(){ errorBox.classList.remove('show'); }
 
-async function handleFile(file){
+function selectFile(file){
   hideError();
   if (!file.type.startsWith('video/')) { showError('動画ファイルを選んでください。'); return; }
   if (file.size > 100*1024*1024) { showError('ファイルサイズが100MBを超えています。'); return; }
+  selectedFile = file;
   filenameEl.textContent = `${file.name}（${(file.size/1024/1024).toFixed(1)}MB）`;
+  addBtn.disabled = false;
+}
+
+addBtn.addEventListener('click', () => { if (selectedFile) handleUpload(selectedFile); });
+
+async function handleUpload(file){
+  hideError();
+  addBtn.disabled = true;
   board.classList.add('show');
   fill.style.width = '0%';
   statusTxt.textContent = 'アップロード準備中…';
@@ -322,11 +369,13 @@ async function handleFile(file){
     vTitle.value = '';
     fileInput.value = '';
     filenameEl.textContent = '';
+    selectedFile = null;
     await refreshAddedList();
     setTimeout(() => board.classList.remove('show'), 1500);
   } catch (err) {
     console.error(err);
     board.classList.remove('show');
+    addBtn.disabled = false;
     showError('失敗しました。もう一度お試しください。（' + (err.message || err) + '）');
   }
 }
