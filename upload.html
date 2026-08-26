@@ -154,7 +154,7 @@ input[type=file] { display: none; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDkhejPJk0Nu90dgbsbbhnUWgCHc0mTawM",
@@ -176,6 +176,11 @@ async function kvGet(key) {
 async function kvSet(key, value) {
   const ref = doc(db, 'kv', key);
   await setDoc(ref, { key, value, updatedAt: Date.now() });
+  return true;
+}
+async function kvDelete(key) {
+  const ref = doc(db, 'kv', key);
+  await deleteDoc(ref);
   return true;
 }
 
@@ -310,7 +315,13 @@ async function deleteVideo(index) {
     const entry = res && res.value ? JSON.parse(res.value) : null;
     if (!entry || !entry.videos) return;
     entry.videos.splice(index, 1);
-    await kvSet(key, JSON.stringify(entry));
+    const isEmpty = !entry.menu && !entry.good && !entry.issue
+      && entry.videos.length === 0 && (!entry.thread || entry.thread.length === 0);
+    if (isEmpty) {
+      await kvDelete(key);
+    } else {
+      await kvSet(key, JSON.stringify(entry));
+    }
     await refreshAddedList();
   } catch (e) {
     alert('削除に失敗しました。もう一度お試しください。');
