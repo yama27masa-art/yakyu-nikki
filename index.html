@@ -37,43 +37,45 @@ body {
 
 /* ── header ── */
 .head {
-  background: var(--navy); color: #fff; padding: 18px 18px 20px;
+  background: var(--navy); color: #fff; padding: 12px 18px 13px;
   border-bottom: 3px solid var(--stitch);
 }
-.head-eyebrow { font-size: 11px; letter-spacing: 0.12em; color: #AEB9CC; font-weight: 500; margin-bottom: 4px; }
-.head-title { font-family: 'Zen Kaku Gothic New', sans-serif; font-weight: 900; font-size: 22px; letter-spacing: 0.02em; }
-.head-sub { font-size: 12px; color: #C7CEDB; margin-top: 3px; }
+.head-eyebrow { font-size: 10px; letter-spacing: 0.12em; color: #AEB9CC; font-weight: 500; margin-bottom: 2px; }
+.head-title { font-family: 'Zen Kaku Gothic New', sans-serif; font-weight: 900; font-size: 18px; letter-spacing: 0.02em; }
+.head-sub { font-size: 11px; color: #C7CEDB; margin-top: 2px; }
 
-.wrap { max-width: 640px; margin: 0 auto; padding: 16px 14px 0; }
+.wrap { max-width: 640px; margin: 0 auto; padding: 10px 14px 0; }
 
 /* ── coach player tabs ── */
-.ptabs { display: flex; gap: 7px; overflow-x: auto; padding: 12px 14px 0; scrollbar-width: none; }
+.ptabs { display: flex; gap: 7px; overflow-x: auto; padding: 8px 14px 0; scrollbar-width: none; }
 .ptabs::-webkit-scrollbar { display: none; }
 .ptab {
-  flex-shrink: 0; padding: 8px 15px; border-radius: 20px;
+  flex-shrink: 0; padding: 7px 14px; border-radius: 20px;
   border: 1px solid var(--border2); background: var(--surface); color: var(--text2);
-  font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all .15s;
+  font-size: 12.5px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all .15s;
 }
 .ptab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
 
 /* ── calendar ── */
-.cal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 16px; }
-.cal-compact { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
-.cal-compact-label { font-family: 'DM Mono', monospace; font-weight: 500; font-size: 15px; color: var(--text); }
+.cal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 10px; }
+.cal-compact { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; gap: 8px; }
+.cal-compact-label { font-family: 'DM Mono', monospace; font-weight: 500; font-size: 14px; color: var(--text); }
+.cal-compact-actions { display: flex; gap: 6px; }
+.cal-today-btn { border: 1px solid var(--border2); background: var(--surface2); color: var(--navy); font-size: 12px; font-weight: 700; border-radius: 16px; padding: 6px 12px; cursor: pointer; }
 .cal-toggle { border: 1px solid var(--border2); background: var(--surface2); color: var(--text2); font-size: 12px; border-radius: 16px; padding: 6px 12px; cursor: pointer; }
 .cal-grid-wrap { border-top: 1px solid var(--border); }
-.cal-head { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--border); }
-.cal-title { font-weight: 700; font-size: 15px; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+.cal-title { font-weight: 700; font-size: 14px; }
 .cal-nav { display: flex; gap: 4px; }
 .cal-nav button {
-  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border2);
+  width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border2);
   background: var(--surface2); color: var(--text); font-size: 14px; cursor: pointer;
 }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); padding: 10px; gap: 3px; }
-.cal-dow { text-align: center; font-size: 11px; color: var(--text3); font-weight: 500; padding-bottom: 4px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px; gap: 2px; }
+.cal-dow { text-align: center; font-size: 10.5px; color: var(--text3); font-weight: 500; padding-bottom: 3px; }
 .cal-cell {
   aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  border-radius: 9px; font-size: 13px; color: var(--text); cursor: pointer; position: relative;
+  border-radius: 8px; font-size: 12.5px; color: var(--text); cursor: pointer; position: relative;
   font-family: 'DM Mono', monospace; border: 1px solid transparent;
 }
 .cal-cell.out { color: var(--text3); cursor: default; }
@@ -86,16 +88,16 @@ body {
 .cal-cell.selected:hover { background: var(--navy); }
 
 /* ── entry panel ── */
-.panel { margin-top: 16px; }
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
-.card-label { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+.panel { margin-top: 10px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; }
+.card-label { font-size: 11.5px; font-weight: 700; color: var(--text2); margin-bottom: 6px; display: flex; align-items: center; gap: 7px; }
 .card.good { border-left: 4px solid var(--green); }
 .card.issue { border-left: 4px solid var(--rust); }
 .card.good .card-label { color: var(--green); }
 .card.issue .card-label { color: var(--rust); }
 textarea {
-  width: 100%; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 10px 12px;
-  font-family: 'Noto Sans JP', sans-serif; font-size: 14px; color: var(--text); resize: vertical; min-height: 64px;
+  width: 100%; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 9px 11px;
+  font-family: 'Noto Sans JP', sans-serif; font-size: 14px; color: var(--text); resize: vertical; min-height: 48px;
   background: var(--surface2);
 }
 textarea:focus { outline: none; border-color: var(--navy); background: var(--surface); }
@@ -349,7 +351,10 @@ async function boot(asPlayer, isCoach) {
     cal.innerHTML = `
       <div class="cal-compact" id="cal-compact">
         <span class="cal-compact-label">${formatSelectedLabel(state.selected)}</span>
-        <button class="cal-toggle" id="cal-toggle">${state.calExpanded ? '閉じる ▲' : '日付を変える ▼'}</button>
+        <div class="cal-compact-actions">
+          ${state.selected !== dateKey(t.y, t.m, t.d) ? `<button class="cal-today-btn" id="cal-today">今日</button>` : ''}
+          <button class="cal-toggle" id="cal-toggle">${state.calExpanded ? '閉じる ▲' : '日付を変える ▼'}</button>
+        </div>
       </div>
       <div class="cal-grid-wrap" id="cal-grid-wrap" ${state.calExpanded ? '' : 'style="display:none;"'}>
         <div class="cal-head">
@@ -363,6 +368,17 @@ async function boot(asPlayer, isCoach) {
         </div>
       </div>
     `;
+    const todayBtn = document.getElementById('cal-today');
+    if (todayBtn) {
+      todayBtn.onclick = async () => {
+        const tp = todayParts();
+        state.year = tp.y; state.month = tp.m;
+        state.selected = dateKey(tp.y, tp.m, tp.d);
+        state.calExpanded = false;
+        await renderCalendar();
+        await loadEntry();
+      };
+    }
     document.getElementById('cal-toggle').onclick = () => {
       state.calExpanded = !state.calExpanded;
       renderCalendar();
