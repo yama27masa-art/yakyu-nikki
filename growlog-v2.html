@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>GrowLog</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F5F3EE; --surface: #FFFFFF; --surface2: #FAF8F4; --border: #E4DFD5; --border2: #D3CCBE;
+  --navy: #1B2A45; --navy2: #121E33; --navy-light: #EDF0F5;
+  --text: #1C1914; --text2: #6E6A62; --text3: #A69F92;
+  --green: #3A6B4C; --green-light: #EEF4EF; --rust: #B5562C; --rust-light: #FBF0EA; --stitch: #B0402C;
+  --radius: 14px; --radius-sm: 9px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; -webkit-font-smoothing: antialiased; padding-bottom: 40px; }
+.mono { font-family: 'DM Mono', monospace; } .disp { font-family: 'Zen Kaku Gothic New', sans-serif; }
+.head { background: var(--navy); color: #fff; padding: 12px 18px 13px; border-bottom: 3px solid var(--stitch); position: relative; }
+.head-cal-btn { position: absolute; top: 10px; right: 14px; width: 34px; height: 34px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.08); font-size: 16px; cursor: pointer; color: #fff; }
+.head-eyebrow { font-size: 10px; letter-spacing: 0.12em; color: #AEB9CC; font-weight: 500; margin-bottom: 2px; }
+.head-title { font-family: 'Zen Kaku Gothic New', sans-serif; font-weight: 900; font-size: 18px; letter-spacing: 0.02em; }
+.head-sub { font-size: 11px; color: #C7CEDB; margin-top: 2px; }
+.wrap { max-width: 640px; margin: 0 auto; padding: 10px 14px 0; }
+.ptabs { display: flex; gap: 7px; overflow-x: auto; padding: 8px 14px 0; scrollbar-width: none; }
+.ptabs::-webkit-scrollbar { display: none; }
+.ptab { flex-shrink: 0; padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border2); background: var(--surface); color: var(--text2); font-size: 12.5px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all .15s; }
+.ptab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+.cal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 10px; }
+.cal-compact { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; gap: 8px; }
+.cal-compact-label { font-family: 'DM Mono', monospace; font-weight: 500; font-size: 14px; color: var(--text); }
+.cal-compact-actions { display: flex; gap: 6px; }
+.cal-today-btn { border: 1px solid var(--border2); background: var(--surface2); color: var(--navy); font-size: 12px; font-weight: 700; border-radius: 16px; padding: 6px 12px; cursor: pointer; }
+.cal-toggle { border: 1px solid var(--border2); background: var(--surface2); color: var(--text2); font-size: 12px; border-radius: 16px; padding: 6px 12px; cursor: pointer; }
+.cal-grid-wrap { border-top: 1px solid var(--border); }
+.cal-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+.cal-title { font-weight: 700; font-size: 14px; }
+.cal-nav { display: flex; gap: 4px; }
+.cal-nav button { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border2); background: var(--surface2); color: var(--text); font-size: 14px; cursor: pointer; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px; gap: 2px; }
+.cal-dow { text-align: center; font-size: 10.5px; color: var(--text3); font-weight: 500; padding-bottom: 3px; }
+.cal-cell { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; font-size: 12.5px; color: var(--text); cursor: pointer; position: relative; font-family: 'DM Mono', monospace; border: 1px solid transparent; }
+.cal-cell.out { color: var(--text3); cursor: default; }
+.cal-cell.today { border-color: var(--navy); }
+.cal-cell.selected { background: var(--navy); color: #fff; }
+.cal-cell .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--stitch); margin-top: 2px; }
+.cal-cell .dot.dot-unread { width: 7px; height: 7px; box-shadow: 0 0 0 2px var(--rust-light); }
+.cal-cell.selected .dot { background: #fff; }
+.cal-cell:not(.out):hover { background: var(--navy-light); }
+.cal-cell.selected:hover { background: var(--navy); }
+.section-title { font-size: 12px; font-weight: 700; color: var(--text3); margin: 14px 2px 6px; letter-spacing: 0.04em; }
+.section-title:first-child { margin-top: 0; }
+.panel { margin-top: 10px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; }
+.card-label { font-size: 11.5px; font-weight: 700; color: var(--text2); margin-bottom: 6px; display: flex; align-items: center; gap: 7px; }
+.card.good { border-left: 4px solid var(--green); } .card.issue { border-left: 4px solid var(--rust); }
+.card.good .card-label { color: var(--green); } .card.issue .card-label { color: var(--rust); }
+textarea { width: 100%; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 9px 11px; font-family: 'Noto Sans JP', sans-serif; font-size: 14px; color: var(--text); resize: none; min-height: 44px; background: var(--surface2); overflow-y: hidden; }
+.goal-card { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 14px; margin-top: 10px; }
+.goal-label { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+.goal-input { width: 100%; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 9px 11px; font-size: 14px; font-weight: 700; color: var(--text); background: var(--surface2); margin-bottom: 10px; }
+.goal-input:focus { outline: none; border-color: var(--navy); background: var(--surface); }
+.goal-tasks-label { font-size: 11.5px; font-weight: 700; color: var(--text2); margin-bottom: 6px; }
+.goal-tasks { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.goal-task-row { display: flex; align-items: center; gap: 6px; }
+.goal-task-input { flex: 1; min-width: 0; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 13px; background: var(--surface2); }
+.goal-task-input:focus { outline: none; border-color: var(--navy); background: var(--surface); }
+.goal-task-del { flex-shrink: 0; border: none; background: none; color: var(--text3); font-size: 15px; cursor: pointer; padding: 2px 4px; }
+.goal-add-btn { border: 1px solid var(--border2); background: var(--surface2); color: var(--text2); border-radius: 16px; padding: 7px 14px; font-size: 12.5px; cursor: pointer; }
+textarea:focus { outline: none; border-color: var(--navy); background: var(--surface); }
+.video-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.video-item { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; }
+.video-item a { flex: 1; font-size: 13px; color: var(--navy); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.video-item button { border: none; background: none; color: var(--text3); cursor: pointer; font-size: 15px; padding: 2px 4px; }
+.video-add { display: flex; gap: 6px; flex-wrap: wrap; }
+.video-add input { flex: 1 1 120px; min-width: 0; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 13px; background: var(--surface2); }
+.video-add input:focus { outline: none; border-color: var(--navy); background: var(--surface); }
+.video-add button { flex-shrink: 0; white-space: nowrap; border: 1px solid var(--border2); background: var(--surface2); border-radius: var(--radius-sm); padding: 0 14px; font-size: 13px; cursor: pointer; color: var(--text2); }
+.video-limit { font-size: 12px; color: var(--text3); background: var(--surface2); border-radius: var(--radius-sm); padding: 9px 10px; text-align: center; }
+.save-status { font-size: 11px; font-weight: 500; color: var(--text3); margin-left: 6px; }
+.thread-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.thread-title { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 12px; }
+.thread { position: relative; min-height: 20px; }
+.msg { margin-bottom: 14px; max-width: 88%; }
+.msg.mine { margin-left: auto; }
+.msg-meta { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
+.msg.mine .msg-meta { text-align: right; }
+.msg-bubble { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 9px 12px; font-size: 13.5px; line-height: 1.55; white-space: pre-wrap; }
+.msg.mine .msg-bubble { background: var(--navy-light); border-color: #D8DEE9; }
+.thread-empty { color: var(--text3); font-size: 13px; padding: 4px 0 10px; }
+.thread-input { display: flex; gap: 8px; margin-top: 10px; }
+.thread-input textarea { min-height: 40px; flex: 1; min-width: 0; }
+.thread-input button { flex-shrink: 0; white-space: nowrap; align-self: flex-end; background: var(--stitch); color: #fff; border: none; border-radius: var(--radius-sm); padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.new-badge { display: inline-block; background: var(--stitch); color: #fff; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 8px; margin-left: 4px; vertical-align: middle; }
+.line-btn { display: block; text-align: center; margin-top: 10px; background: #06C755; color: #fff; text-decoration: none; font-size: 13px; font-weight: 700; border-radius: 20px; padding: 10px; }
+.empty-hint { text-align: center; color: var(--text3); font-size: 13px; padding: 30px 10px; }
+/* ── auth screen ── */
+.auth-wrap { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; background: var(--bg); }
+.auth-box { width: 100%; max-width: 400px; }
+.auth-title { font-family: 'Zen Kaku Gothic New', sans-serif; font-weight: 900; font-size: 22px; color: var(--navy); margin-bottom: 14px; }
+.auth-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.auth-tab { flex: 1; text-align: center; padding: 10px; border-radius: 10px; border: 1px solid var(--border2); background: var(--surface); color: var(--text2); font-weight: 700; font-size: 13px; cursor: pointer; }
+.auth-tab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+.auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.auth-card label { display: block; font-size: 12px; color: var(--text2); font-weight: 700; margin: 12px 0 4px; }
+.auth-card label:first-child { margin-top: 0; }
+.auth-card input { width: 100%; padding: 10px 12px; border: 1px solid var(--border2); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; color: var(--text); }
+.role-row { display: flex; gap: 8px; margin-top: 4px; }
+.role-opt { flex: 1; text-align: center; padding: 10px; border-radius: 10px; border: 1px solid var(--border2); cursor: pointer; font-size: 13px; font-weight: 700; color: var(--text2); }
+.role-opt.active { border-color: var(--navy); background: var(--navy); color: #fff; }
+.auth-btn { width: 100%; margin-top: 18px; padding: 12px; border: none; border-radius: 10px; background: var(--navy); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; }
+.auth-msg { font-size: 12.5px; margin-top: 10px; padding: 8px 10px; border-radius: 8px; }
+.auth-msg.err { background: var(--rust-light); color: var(--rust); }
+.auth-msg.ok { background: var(--green-light); color: var(--green); }
+.auth-hint { font-size: 11.5px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
+.switch-code { text-align: center; font-size: 11.5px; color: var(--text3); padding: 14px 0 6px; cursor: pointer; text-decoration: underline; }
+.err-screen { display: flex; align-items: center; justify-content: center; min-height: 60vh; padding: 30px; text-align: center; color: var(--text2); font-size: 14px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  sendEmailVerification, onAuthStateChanged, signOut, reload
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, orderBy
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDkhejPJk0Nu90dgbsbbhnUWgCHc0mTawM",
+  authDomain: "yakyu-nikki.firebaseapp.com",
+  projectId: "yakyu-nikki",
+  storageBucket: "yakyu-nikki.firebasestorage.app",
+  messagingSenderId: "522594099909",
+  appId: "1:522594099909:web:17fcfb6f96580d6c1486ac"
+};
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+const SITE_URL = location.href.split('?')[0];
+
+async function kvGet(key) {
+  const snap = await getDoc(doc(db, 'kv', key));
+  if (!snap.exists()) return null;
+  return { value: snap.data().value };
+}
+async function kvSet(key, value) {
+  await setDoc(doc(db, 'kv', key), { key, value, updatedAt: Date.now() });
+  return true;
+}
+async function kvList(prefix) {
+  const q = query(collection(db, 'kv'), where('key', '>=', prefix), where('key', '<', prefix + '\uf8ff'));
+  const snaps = await getDocs(q);
+  const keys = [];
+  snaps.forEach(d => keys.push(d.id));
+  return { keys };
+}
+
+const app = document.getElementById('app');
+
+/* ────────── 認証画面 ────────── */
+let authMode = 'login';
+let authRole = 'student';
+
+function renderAuth() {
+  app.innerHTML = `
+    <div class="auth-wrap"><div class="auth-box">
+      <div class="auth-title">GrowLog</div>
+      <div class="auth-tabs">
+        <div class="auth-tab ${authMode==='login'?'active':''}" data-tab="login">ログイン</div>
+        <div class="auth-tab ${authMode==='signup'?'active':''}" data-tab="signup">新規登録</div>
+      </div>
+      <div class="auth-card">
+        ${authMode === 'signup' ? `
+          <label>お名前</label>
+          <input id="a-name" type="text" placeholder="表示される名前">
+          <label>役割</label>
+          <div class="role-row">
+            <div class="role-opt ${authRole==='student'?'active':''}" data-role="student">選手・生徒</div>
+            <div class="role-opt ${authRole==='coach'?'active':''}" data-role="coach">コーチ</div>
+          </div>
+          <label>競技名</label>
+          <input id="a-sport" type="text" placeholder="例）野球、サッカー、バスケットボール">
+          <label>チームコード</label>
+          <input id="a-team" type="text" autocapitalize="off" autocomplete="off" placeholder="例）ehime-u18">
+          <div class="auth-hint">同じチームコードの人同士だけ、コーチが選手の記録を見られます。コーチ・選手とも同じコードを入力してください。</div>
+        ` : ``}
+        <label>メールアドレス</label>
+        <input id="a-email" type="email" autocomplete="username" placeholder="you@example.com">
+        <label>パスワード</label>
+        <input id="a-pass" type="password" autocomplete="${authMode==='signup'?'new-password':'current-password'}" placeholder="6文字以上">
+        <button id="a-submit" class="auth-btn">${authMode==='signup' ? '仮登録する' : 'ログイン'}</button>
+        <div id="a-msg"></div>
+      </div>
+    </div></div>
+  `;
+  app.querySelectorAll('.auth-tab').forEach(t => t.onclick = () => { authMode = t.dataset.tab; renderAuth(); });
+  app.querySelectorAll('.role-opt').forEach(r => r.onclick = () => { authRole = r.dataset.role; renderAuth(); });
+  document.getElementById('a-submit').onclick = authMode === 'signup' ? handleSignup : handleLogin;
+}
+function showAuthMsg(text, type) {
+  const el = document.getElementById('a-msg');
+  if (el) el.innerHTML = `<div class="auth-msg ${type}">${text}</div>`;
+}
+async function handleSignup() {
+  const name = document.getElementById('a-name').value.trim();
+  const sport = document.getElementById('a-sport').value.trim();
+  const teamCode = document.getElementById('a-team').value.trim();
+  const email = document.getElementById('a-email').value.trim();
+  const password = document.getElementById('a-pass').value;
+  if (!name || !sport || !teamCode || !email || !password) { showAuthMsg('すべての項目を入力してください', 'err'); return; }
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await setDoc(doc(db, 'users', cred.user.uid), {
+      email, displayName: name, role: authRole, sport, teamCode, createdAt: Date.now()
+    });
+    await sendEmailVerification(cred.user);
+    showAuthMsg('仮登録できました。届いた確認メールのリンクを開いてから、ログインしてください。', 'ok');
+  } catch (e) { showAuthMsg(translateError(e), 'err'); }
+}
+async function handleLogin() {
+  const email = document.getElementById('a-email').value.trim();
+  const password = document.getElementById('a-pass').value;
+  if (!email || !password) { showAuthMsg('メールアドレスとパスワードを入力してください', 'err'); return; }
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    await reload(cred.user);
+    if (!cred.user.emailVerified) {
+      showAuthMsg('まだメール確認が済んでいません。届いたメールのリンクを開いてから、もう一度ログインしてください。', 'err');
+      await signOut(auth);
+      return;
+    }
+  } catch (e) { showAuthMsg(translateError(e), 'err'); }
+}
+function translateError(e) {
+  const code = e.code || '';
+  if (code.includes('email-already-in-use')) return 'このメールアドレスはすでに登録されています。ログインタブからお試しください。';
+  if (code.includes('invalid-email')) return 'メールアドレスの形式が正しくありません。';
+  if (code.includes('weak-password')) return 'パスワードは6文字以上にしてください。';
+  if (code.includes('user-not-found') || code.includes('wrong-password') || code.includes('invalid-credential')) return 'メールアドレスまたはパスワードが正しくありません。';
+  return 'エラーが発生しました：' + code;
+}
+
+/* ────────── 起動フロー ────────── */
+onAuthStateChanged(auth, async (user) => {
+  if (user && user.emailVerified) {
+    try {
+      const profSnap = await getDoc(doc(db, 'users', user.uid));
+      if (!profSnap.exists()) {
+        app.innerHTML = `<div class="err-screen">プロフィールが見つかりませんでした。サポートにご連絡ください。</div>`;
+        return;
+      }
+      boot(user, profSnap.data());
+    } catch (e) {
+      app.innerHTML = `<div class="err-screen">読み込みに失敗しました：${e.message}</div>`;
+    }
+  } else {
+    renderAuth();
+  }
+});
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function dateKey(y, m, d) { return `${y}-${pad(m + 1)}-${pad(d)}`; }
+function todayParts() { const t = new Date(); return { y: t.getFullYear(), m: t.getMonth(), d: t.getDate() }; }
+function formatSelectedLabel(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dow = ['日', '月', '火', '水', '木', '金', '土'][new Date(y, m - 1, d).getDay()];
+  return `${m}月${d}日（${dow}）`;
+}
+
+async function boot(user, profile) {
+  const isCoach = profile.role === 'coach';
+  let TEAM = [{ uid: user.uid, name: profile.displayName }];
+  if (isCoach) {
+    const q = query(collection(db, 'users'), where('teamCode', '==', profile.teamCode), where('role', '==', 'student'));
+    const snaps = await getDocs(q);
+    const members = [];
+    snaps.forEach(d => members.push({ uid: d.id, name: d.data().displayName }));
+    if (members.length) TEAM = members;
+  }
+
+  const today = todayParts();
+  const state = {
+    playerId: TEAM[0].uid,
+    role: isCoach ? 'coach' : 'player',
+    myName: profile.displayName,
+    year: today.y, month: today.m,
+    selected: dateKey(today.y, today.m, today.d),
+    entry: null, calExpanded: false,
+  };
+
+  render();
+
+  async function render() {
+    const player = TEAM.find(r => r.uid === state.playerId);
+    app.innerHTML = `
+      <div class="head">
+        <button class="head-cal-btn" id="head-cal-btn" aria-label="カレンダーを開く">📅</button>
+        <div class="head-eyebrow">GrowLog・${profile.sport}</div>
+        <div class="head-title" id="head-title">${isCoach ? (player ? player.name + 'さん' : '') : player.name + 'さん'}</div>
+        <div class="head-sub">${isCoach ? '選手を選んでカレンダーから記録を確認・記入できます' : '練習の記録をつけよう'}</div>
+      </div>
+      <div class="wrap">
+        ${isCoach ? `<div class="ptabs" id="ptabs"></div>` : ''}
+        <div class="goal-card" id="goal-card"><div class="goal-loading">読み込み中…</div></div>
+        <div class="cal" id="cal"></div>
+        <div class="panel" id="panel"></div>
+        <div class="switch-code" id="logout-link">ログアウト</div>
+      </div>
+    `;
+    document.getElementById('logout-link').onclick = () => signOut(auth);
+    document.getElementById('head-cal-btn').onclick = () => { state.calExpanded = !state.calExpanded; renderCalendar(); };
+    if (isCoach) renderTabs();
+    renderCalendar();
+    await loadGoal();
+    await loadEntry();
+  }
+
+  function renderTabs() {
+    const wrap = document.getElementById('ptabs');
+    wrap.innerHTML = TEAM.map(r => `<button class="ptab ${r.uid === state.playerId ? 'active' : ''}" data-id="${r.uid}">${r.name}</button>`).join('');
+    wrap.querySelectorAll('.ptab').forEach(btn => {
+      btn.onclick = async () => {
+        state.playerId = btn.dataset.id;
+        const titleEl = document.getElementById('head-title');
+        if (titleEl) titleEl.textContent = TEAM.find(r => r.uid === state.playerId).name + 'さん';
+        renderTabs(); renderCalendar();
+        await loadGoal(); await loadEntry();
+      };
+    });
+  }
+
+  async function renderCalendar() {
+    const cal = document.getElementById('cal');
+    const y = state.year, m = state.month;
+    const first = new Date(y, m, 1);
+    const startDow = first.getDay();
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    const prevDays = new Date(y, m, 0).getDate();
+    const dows = ['日', '月', '火', '水', '木', '金', '土'];
+    let cells = '';
+    for (let i = 0; i < startDow; i++) cells += `<div class="cal-cell out">${prevDays - startDow + i + 1}</div>`;
+    const t = todayParts();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = dateKey(y, m, d);
+      const isToday = t.y === y && t.m === m && t.d === d;
+      const isSel = key === state.selected;
+      cells += `<div class="cal-cell ${isToday ? 'today' : ''} ${isSel ? 'selected' : ''}" data-date="${key}">
+        <span>${d}</span><span class="dot" style="visibility:hidden" data-dot="${key}"></span>
+      </div>`;
+    }
+    const totalCells = startDow + daysInMonth;
+    const trailing = (7 - (totalCells % 7)) % 7;
+    for (let i = 1; i <= trailing; i++) cells += `<div class="cal-cell out">${i}</div>`;
+    cal.innerHTML = `
+      <div class="cal-compact" id="cal-compact">
+        <span class="cal-compact-label">${formatSelectedLabel(state.selected)}</span>
+        <div class="cal-compact-actions">
+          ${state.selected !== dateKey(t.y, t.m, t.d) ? `<button class="cal-today-btn" id="cal-today">今日</button>` : ''}
+        </div>
+      </div>
+      <div class="cal-grid-wrap" id="cal-grid-wrap" ${state.calExpanded ? '' : 'style="display:none;"'}>
+        <div class="cal-head"><div class="cal-nav"><button id="prevM">‹</button></div><div class="cal-title">${y}年 ${m + 1}月</div><div class="cal-nav"><button id="nextM">›</button></div></div>
+        <div class="cal-grid">${dows.map(d => `<div class="cal-dow">${d}</div>`).join('')}${cells}</div>
+      </div>
+    `;
+    const todayBtn = document.getElementById('cal-today');
+    if (todayBtn) todayBtn.onclick = async () => {
+      const tp = todayParts();
+      state.year = tp.y; state.month = tp.m; state.selected = dateKey(tp.y, tp.m, tp.d); state.calExpanded = false;
+      await renderCalendar(); await loadEntry();
+    };
+    document.getElementById('prevM').onclick = async () => { state.month--; if (state.month < 0) { state.month = 11; state.year--; } await renderCalendar(); };
+    document.getElementById('nextM').onclick = async () => { state.month++; if (state.month > 11) { state.month = 0; state.year++; } await renderCalendar(); };
+    cal.querySelectorAll('.cal-cell[data-date]').forEach(c => {
+      c.onclick = async () => {
+        state.selected = c.dataset.date;
+        const dt = state.selected.split('-');
+        state.year = parseInt(dt[0]); state.month = parseInt(dt[1]) - 1;
+        state.calExpanded = false;
+        await renderCalendar(); await loadEntry();
+      };
+    });
+    try {
+      const prefix = `entry:${state.playerId}:${y}-${pad(m + 1)}`;
+      const res = await kvList(prefix);
+      const keys = (res && res.keys) || [];
+      const dateStrs = [];
+      keys.forEach(k => {
+        const dateStr = k.split(':')[2];
+        dateStrs.push(dateStr);
+        const dotEl = cal.querySelector(`[data-dot="${dateStr}"]`);
+        if (dotEl) dotEl.style.visibility = 'visible';
+      });
+      markUnreadDots(dateStrs);
+    } catch (e) { /* no entries this month */ }
+  }
+
+  async function markUnreadDots(dateStrs) {
+    for (const dateStr of dateStrs) {
+      try {
+        const entryRes = await kvGet(`entry:${state.playerId}:${dateStr}`);
+        if (!entryRes || !entryRes.value) continue;
+        const data = JSON.parse(entryRes.value);
+        if (!data.thread || !data.thread.length) continue;
+        const last = data.thread[data.thread.length - 1];
+        if (last.author === state.role) continue;
+        const lastReadEpoch = await getLastRead(state.playerId, dateStr, state.role);
+        if (last.tsRaw && last.tsRaw > lastReadEpoch) {
+          const dotEl = document.querySelector(`[data-dot="${dateStr}"]`);
+          if (dotEl) { dotEl.style.visibility = 'visible'; dotEl.classList.add('dot-unread'); }
+        }
+      } catch (e) { /* skip */ }
+    }
+  }
+  async function getLastRead(playerId, date, role) {
+    try {
+      const res = await kvGet(`lastread:${playerId}:${date}:${role}`);
+      if (res && res.value) return parseInt(res.value, 10) || 0;
+    } catch (e) {}
+    return 0;
+  }
+  async function setLastRead(playerId, date, role) {
+    try { await kvSet(`lastread:${playerId}:${date}:${role}`, String(Date.now())); } catch (e) {}
+  }
+
+  async function getGoal(playerId) {
+    try {
+      const res = await kvGet(`goal:${playerId}`);
+      if (res && res.value) return JSON.parse(res.value);
+    } catch (e) {}
+    return { goal: '', tasks: ['', '', ''] };
+  }
+  async function loadGoal() {
+    state.goal = await getGoal(state.playerId);
+    if (!state.goal.tasks || state.goal.tasks.length < 3) {
+      state.goal.tasks = (state.goal.tasks || []).concat(['', '', '']).slice(0, Math.max(3, (state.goal.tasks || []).length));
+    }
+    renderGoal();
+  }
+  function renderGoal() {
+    const box = document.getElementById('goal-card');
+    if (!box) return;
+    box.innerHTML = `
+      <div class="goal-label">🎯 目標</div>
+      <input class="goal-input" id="goal-text" placeholder="目標を書こう" value="${escapeAttr(state.goal.goal)}">
+      <div class="goal-tasks-label">そのためにやること</div>
+      <div class="goal-tasks" id="goal-tasks">
+        ${state.goal.tasks.map((t, i) => `
+          <div class="goal-task-row">
+            <input class="goal-task-input" data-i="${i}" placeholder="やること ${i + 1}" value="${escapeAttr(t)}">
+            ${i >= 3 ? `<button class="goal-task-del" data-i="${i}">✕</button>` : ''}
+          </div>
+        `).join('')}
+      </div>
+      <button class="goal-add-btn" id="goal-add-task">＋ やることを追加</button>
+      <span class="save-status" id="goal-save-status"></span>
+    `;
+    document.getElementById('goal-text').addEventListener('input', scheduleGoalSave);
+    box.querySelectorAll('.goal-task-input').forEach(inp => inp.addEventListener('input', scheduleGoalSave));
+    box.querySelectorAll('.goal-task-del').forEach(btn => {
+      btn.onclick = () => { state.goal.tasks.splice(parseInt(btn.dataset.i), 1); renderGoal(); saveGoal(); };
+    });
+    document.getElementById('goal-add-task').onclick = () => { state.goal.tasks.push(''); renderGoal(); };
+  }
+  let goalSaveTimer = null;
+  function scheduleGoalSave() {
+    const status = document.getElementById('goal-save-status');
+    if (status) status.textContent = '…';
+    clearTimeout(goalSaveTimer);
+    goalSaveTimer = setTimeout(saveGoal, 700);
+  }
+  async function saveGoal() {
+    const goalText = document.getElementById('goal-text');
+    if (goalText) state.goal.goal = goalText.value;
+    document.querySelectorAll('.goal-task-input').forEach(inp => { state.goal.tasks[parseInt(inp.dataset.i)] = inp.value; });
+    const status = document.getElementById('goal-save-status');
+    if (status) status.textContent = '保存中…';
+    try {
+      await kvSet(`goal:${state.playerId}`, JSON.stringify(state.goal));
+      if (status) status.textContent = '保存しました';
+    } catch (e) { if (status) status.textContent = '保存に失敗しました'; }
+  }
+
+  async function loadEntry() {
+    const panel = document.getElementById('panel');
+    panel.innerHTML = `<div class="empty-hint">読み込み中…</div>`;
+    const key = `entry:${state.playerId}:${state.selected}`;
+    let data = null;
+    try {
+      const res = await kvGet(key);
+      if (res && res.value) data = JSON.parse(res.value);
+    } catch (e) { data = null; }
+    if (!data) data = { menu: '', good: '', issue: '', gameGood: '', gameIssue: '', videos: [], thread: [] };
+    if (data.gameGood === undefined) data.gameGood = '';
+    if (data.gameIssue === undefined) data.gameIssue = '';
+    state.entry = data;
+    state.lastReadEpoch = await getLastRead(state.playerId, state.selected, state.role);
+    renderPanel();
+    setLastRead(state.playerId, state.selected, state.role);
+  }
+
+  function renderPanel() {
+    const panel = document.getElementById('panel');
+    const e = state.entry;
+    panel.innerHTML = `
+      <div class="section-title">練習</div>
+      <div class="card"><div class="card-label">練習メニュー <span class="save-status" id="save-status"></span></div>
+        <textarea id="f-menu" placeholder="今日やった練習内容を書こう">${escapeHtml(e.menu)}</textarea></div>
+      <div class="card good"><div class="card-label">◎ 良かった点</div>
+        <textarea id="f-good" placeholder="意識したことや、うまくいったこと">${escapeHtml(e.good)}</textarea></div>
+      <div class="card issue"><div class="card-label">△ 改善点</div>
+        <textarea id="f-issue" placeholder="難しかったこと、次に直したいこと">${escapeHtml(e.issue)}</textarea></div>
+      <div class="section-title">試合・実戦形式</div>
+      <div class="card good"><div class="card-label">◎ 良かった点</div>
+        <textarea id="f-game-good" placeholder="試合や実戦形式で良かったこと">${escapeHtml(e.gameGood)}</textarea></div>
+      <div class="card issue"><div class="card-label">△ 改善点</div>
+        <textarea id="f-game-issue" placeholder="試合や実戦形式での課題">${escapeHtml(e.gameIssue)}</textarea></div>
+      <div class="card"><div class="card-label">おすすめ動画</div>
+        <div class="video-list" id="video-list">
+          ${e.videos.map((v, i) => `<div class="video-item"><a href="${escapeAttr(v.url)}" target="_blank" rel="noopener">${escapeHtml(v.title || v.url)}</a><button data-i="${i}" class="video-del">✕</button></div>`).join('') || '<div class="thread-empty">まだ動画はありません</div>'}
+        </div>
+        <div class="video-add"><input id="v-title" placeholder="タイトル（任意）"><input id="v-url" placeholder="URLを貼り付け"><button id="v-add">追加</button></div>
+      </div>
+      <div class="thread-card">
+        <div class="thread-title">やり取り</div>
+        <div class="thread" id="thread">${e.thread.length ? e.thread.map(m => threadMsgHtml(m)).join('') : '<div class="thread-empty">まだやり取りはありません</div>'}</div>
+        <div class="thread-input"><textarea id="t-input" placeholder="わからないことがあったら書いてみよう"></textarea><button id="t-send">送信</button></div>
+        <div id="line-notify"></div>
+      </div>
+    `;
+    document.getElementById('v-add').onclick = () => {
+      const title = document.getElementById('v-title').value.trim();
+      const url = document.getElementById('v-url').value.trim();
+      if (!url) return;
+      state.entry.videos.push({ title, url });
+      renderPanel();
+    };
+    panel.querySelectorAll('.video-del').forEach(btn => { btn.onclick = () => { state.entry.videos.splice(parseInt(btn.dataset.i), 1); renderPanel(); }; });
+    ['f-menu', 'f-good', 'f-issue', 'f-game-good', 'f-game-issue'].forEach(id => {
+      const el = document.getElementById(id);
+      autosizeTextarea(el);
+      el.addEventListener('input', () => { autosizeTextarea(el); scheduleAutoSave(); });
+    });
+    document.getElementById('t-send').onclick = () => sendThread();
+  }
+
+  function autosizeTextarea(el) { el.style.height = 'auto'; el.style.height = (el.scrollHeight + 2) + 'px'; }
+  let autoSaveTimer = null;
+  function scheduleAutoSave() {
+    const status = document.getElementById('save-status');
+    if (status) status.textContent = '…';
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => { saveEntry(); }, 700);
+  }
+  function threadMsgHtml(m) {
+    const mine = m.author === state.role;
+    const label = m.authorName || (m.author === 'coach' ? 'コーチ' : '本人');
+    const isNew = !mine && m.tsRaw && m.tsRaw > (state.lastReadEpoch || 0);
+    return `<div class="msg ${mine ? 'mine' : ''}"><div class="msg-meta">${label} ・ ${m.ts} ${isNew ? '<span class="new-badge">NEW</span>' : ''}</div><div class="msg-bubble">${escapeHtml(m.text)}</div></div>`;
+  }
+  async function saveEntry() {
+    state.entry.menu = document.getElementById('f-menu').value;
+    state.entry.good = document.getElementById('f-good').value;
+    state.entry.issue = document.getElementById('f-issue').value;
+    state.entry.gameGood = document.getElementById('f-game-good').value;
+    state.entry.gameIssue = document.getElementById('f-game-issue').value;
+    const key = `entry:${state.playerId}:${state.selected}`;
+    const status = document.getElementById('save-status');
+    if (status) status.textContent = '保存中…';
+    try {
+      await kvSet(key, JSON.stringify(state.entry));
+      if (status) status.textContent = '保存しました';
+      const dotEl = document.querySelector(`[data-dot="${state.selected}"]`);
+      if (dotEl) dotEl.style.visibility = 'visible';
+    } catch (e) { if (status) status.textContent = '保存に失敗しました'; }
+  }
+  async function sendThread() {
+    const input = document.getElementById('t-input');
+    const text = input.value.trim();
+    if (!text) return;
+    const now = new Date();
+    const ts = `${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    state.entry.thread.push({ author: state.role, authorName: state.myName, text, ts, tsRaw: now.getTime() });
+    input.value = '';
+    await saveEntry();
+    await setLastRead(state.playerId, state.selected, state.role);
+    renderPanel();
+    showLineNotify();
+  }
+  function showLineNotify() {
+    const box = document.getElementById('line-notify');
+    if (!box) return;
+    const player = TEAM.find(r => r.uid === state.playerId);
+    const who = state.role === 'coach' ? (player ? player.name + 'さん' : '選手') : 'コーチ';
+    const msg = `GrowLog（${player ? player.name + 'さん・' : ''}${state.selected}）に書き込みしたよ。見てね！\n${SITE_URL}`;
+    const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(msg)}`;
+    box.innerHTML = `<a class="line-btn" href="${lineUrl}" target="_blank" rel="noopener">${who}にLINEで知らせる</a>`;
+  }
+  function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function escapeAttr(s) { return escapeHtml(s); }
+}
+</script>
+</body>
+</html>
