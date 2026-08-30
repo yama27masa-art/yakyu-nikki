@@ -188,11 +188,29 @@ function renderAuth() {
           <label>チームコード</label>
           <input id="a-team" type="text" autocapitalize="off" autocomplete="off" placeholder="例）ehime-u18">
           <div class="auth-hint">同じチームコードの人同士だけ、コーチが選手の記録を見られます。コーチ・選手とも同じコードを入力してください。</div>
+          ${authRole === 'student' ? `
+            <label>生年月日</label>
+            <input id="a-birthdate" type="date">
+            <div id="guardian-block" style="display:none; margin-top:14px; padding:12px; border:1px solid var(--border2); border-radius:10px; background:var(--surface2);">
+              <div class="auth-hint" style="margin:0 0 10px; color:var(--text2); font-weight:700;">18歳未満のため、保護者の情報登録が必須です</div>
+              <label style="margin-top:0;">保護者の氏名</label>
+              <input id="a-guardian-name" type="text" placeholder="保護者のお名前">
+              <label>保護者のメールアドレス</label>
+              <input id="a-guardian-email" type="email" placeholder="guardian@example.com">
+              <label style="display:flex; align-items:flex-start; gap:8px; font-weight:400; margin-top:12px; cursor:pointer;">
+                <input id="a-guardian-consent" type="checkbox" style="width:auto; margin-top:3px;">
+                <span>保護者の同意を得た上で登録します。生徒アカウントのログイン情報は保護者と共有します。</span>
+              </label>
+            </div>
+          ` : ``}
         ` : ``}
         <label>メールアドレス</label>
         <input id="a-email" type="email" autocomplete="username" placeholder="you@example.com">
         <label>パスワード</label>
-        <input id="a-pass" type="password" autocomplete="${authMode==='signup'?'new-password':'current-password'}" placeholder="6文字以上">
+        <div style="display:flex; gap:6px;">
+          <input id="a-pass" type="password" autocomplete="${authMode==='signup'?'new-password':'current-password'}" placeholder="6文字以上" style="flex:1;">
+          <button type="button" id="a-pass-toggle" style="flex-shrink:0; border:1px solid var(--border2); background:var(--surface2); border-radius:10px; padding:0 14px; font-size:12.5px; cursor:pointer; color:var(--text2);">表示</button>
+        </div>
         <button id="a-submit" class="auth-btn">${authMode==='signup' ? '仮登録する' : 'ログイン'}</button>
         <div id="a-msg"></div>
       </div>
@@ -201,6 +219,31 @@ function renderAuth() {
   app.querySelectorAll('.auth-tab').forEach(t => t.onclick = () => { authMode = t.dataset.tab; renderAuth(); });
   app.querySelectorAll('.role-opt').forEach(r => r.onclick = () => { authRole = r.dataset.role; renderAuth(); });
   document.getElementById('a-submit').onclick = authMode === 'signup' ? handleSignup : handleLogin;
+  const toggleBtn = document.getElementById('a-pass-toggle');
+  const passInput = document.getElementById('a-pass');
+  toggleBtn.onclick = () => {
+    const showing = passInput.type === 'text';
+    passInput.type = showing ? 'password' : 'text';
+    toggleBtn.textContent = showing ? '表示' : '隠す';
+  };
+  const birthdateInput = document.getElementById('a-birthdate');
+  if (birthdateInput) {
+    birthdateInput.addEventListener('change', () => {
+      const guardianBlock = document.getElementById('guardian-block');
+      const age = calcAge(birthdateInput.value);
+      guardianBlock.style.display = (age !== null && age < 18) ? 'block' : 'none';
+    });
+  }
+}
+function calcAge(birthdateStr) {
+  if (!birthdateStr) return null;
+  const b = new Date(birthdateStr);
+  if (isNaN(b.getTime())) return null;
+  const t = new Date();
+  let age = t.getFullYear() - b.getFullYear();
+  const m = t.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && t.getDate() < b.getDate())) age--;
+  return age;
 }
 function showAuthMsg(text, type) {
   const el = document.getElementById('a-msg');
@@ -213,11 +256,31 @@ async function handleSignup() {
   const email = document.getElementById('a-email').value.trim();
   const password = document.getElementById('a-pass').value;
   if (!name || !sport || !teamCode || !email || !password) { showAuthMsg('すべての項目を入力してください', 'err'); return; }
+
+  let birthdate = null, isMinor = false, guardianName = '', guardianEmail = '', guardianConsent = false;
+  if (authRole === 'student') {
+    birthdate = document.getElementById('a-birthdate').value;
+    if (!birthdate) { showAuthMsg('生年月日を入力してください', 'err'); return; }
+    const age = calcAge(birthdate);
+    isMinor = age !== null && age < 18;
+    if (isMinor) {
+      guardianName = document.getElementById('a-guardian-name').value.trim();
+      guardianEmail = document.getElementById('a-guardian-email').value.trim();
+      guardianConsent = document.getElementById('a-guardian-consent').checked;
+      if (!guardianName || !guardianEmail || !guardianConsent) {
+        showAuthMsg('18歳未満のため、保護者の氏名・メールアドレスの入力と同意チェックが必須です', 'err');
+        return;
+      }
+    }
+  }
+
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db, 'users', cred.user.uid), {
-      email, displayName: name, role: authRole, sport, teamCode, createdAt: Date.now()
-    });
+    const profileData = { email, displayName: name, role: authRole, sport, teamCode, createdAt: Date.now() };
+    if (authRole === 'student') {
+      Object.assign(profileData, { birthdate, isMinor, guardianName, guardianEmail, guardianConsent });
+    }
+    await setDoc(doc(db, 'users', cred.user.uid), profileData);
     await sendEmailVerification(cred.user);
     showAuthMsg('仮登録できました。届いた確認メールのリンクを開いてから、ログインしてください。', 'ok');
   } catch (e) { showAuthMsg(translateError(e), 'err'); }
