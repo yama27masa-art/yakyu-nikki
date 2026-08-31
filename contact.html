@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お問い合わせ | GrowLog</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#F5F3EE; --surface:#FFFFFF; --text:#1C1914; --text2:#6E6A62; --navy:#1B2A45; --border:#E4DFD5; --border2:#D3CCBE; --green:#3A6B4C; --green-light:#EEF4EF; --rust:#B5562C; --rust-light:#FBF0EA; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:'Noto Sans JP',sans-serif; }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 50px 20px 80px; }
+  h1 { font-family:'Zen Kaku Gothic New',sans-serif; font-weight:900; font-size:22px; color:var(--navy); margin-bottom:6px; }
+  .sub { font-size:13px; color:var(--text2); margin-bottom:24px; line-height:1.7; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
+  label { display:block; font-size:12px; font-weight:700; color:var(--text2); margin:14px 0 4px; }
+  label:first-child { margin-top:0; }
+  input, textarea, select { width:100%; padding:10px 12px; border:1px solid var(--border2); border-radius:9px; font-size:14px; font-family:inherit; background:#fff; color:var(--text); }
+  textarea { min-height: 120px; resize: vertical; }
+  button { width:100%; margin-top:18px; padding:13px; border:none; border-radius:10px; background:var(--navy); color:#fff; font-weight:700; font-size:14px; cursor:pointer; }
+  button:disabled { opacity:0.5; cursor:default; }
+  .msg { font-size:12.5px; margin-top:12px; padding:8px 10px; border-radius:8px; }
+  .msg.ok { background:var(--green-light); color:var(--green); }
+  .msg.err { background:var(--rust-light); color:var(--rust); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>お問い合わせ</h1>
+  <div class="sub">GrowLogに関するご質問・ご要望・運営者情報の開示請求などは、こちらのフォームからご連絡ください。内容を確認の上、担当者より折り返しご連絡いたします。</div>
+  <div class="card">
+    <label>お名前</label>
+    <input id="c-name" type="text" placeholder="お名前">
+    <label>メールアドレス</label>
+    <input id="c-email" type="email" placeholder="you@example.com">
+    <label>お問い合わせ種別</label>
+    <select id="c-type">
+      <option value="general">一般的なご質問</option>
+      <option value="disclosure">運営者情報（氏名・住所等）の開示請求</option>
+      <option value="cancel">解約・支払いについて</option>
+      <option value="bug">不具合の報告</option>
+      <option value="other">その他</option>
+    </select>
+    <label>お問い合わせ内容</label>
+    <textarea id="c-message" placeholder="お問い合わせ内容をご記入ください"></textarea>
+    <button id="c-submit">送信する</button>
+    <div id="c-msg"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app-check.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDkhejPJk0Nu90dgbsbbhnUWgCHc0mTawM",
+  authDomain: "yakyu-nikki.firebaseapp.com",
+  projectId: "yakyu-nikki",
+  storageBucket: "yakyu-nikki.firebasestorage.app",
+  messagingSenderId: "522594099909",
+  appId: "1:522594099909:web:17fcfb6f96580d6c1486ac"
+};
+const fbApp = initializeApp(firebaseConfig);
+initializeAppCheck(fbApp, {
+  provider: new ReCaptchaEnterpriseProvider('6Lfq2aAtAAAAAAHUaHQvytodWp76RbOp-1_Fvph9'),
+  isTokenAutoRefreshEnabled: true
+});
+const db = getFirestore(fbApp);
+
+document.getElementById('c-submit').onclick = async () => {
+  const name = document.getElementById('c-name').value.trim();
+  const email = document.getElementById('c-email').value.trim();
+  const type = document.getElementById('c-type').value;
+  const message = document.getElementById('c-message').value.trim();
+  const msgBox = document.getElementById('c-msg');
+  const btn = document.getElementById('c-submit');
+  if (!name || !email || !message) {
+    msgBox.innerHTML = `<div class="msg err">お名前・メールアドレス・お問い合わせ内容は必須です</div>`;
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = '送信中…';
+  try {
+    await addDoc(collection(db, 'contact_messages'), {
+      name, email, type, message, createdAt: Date.now(), status: 'new'
+    });
+    document.querySelector('.card').innerHTML = `<div class="msg ok">送信しました。内容を確認の上、担当者よりご連絡いたします。</div>`;
+  } catch (e) {
+    msgBox.innerHTML = `<div class="msg err">送信に失敗しました：${e.message}</div>`;
+    btn.disabled = false;
+    btn.textContent = '送信する';
+  }
+};
+</script>
+</body>
+</html>
