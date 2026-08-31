@@ -115,6 +115,21 @@ textarea:focus { outline: none; border-color: var(--navy); background: var(--sur
 .auth-hint { font-size: 11.5px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
 .switch-code { text-align: center; font-size: 11.5px; color: var(--text3); padding: 14px 0 6px; cursor: pointer; text-decoration: underline; }
 .err-screen { display: flex; align-items: center; justify-content: center; min-height: 60vh; padding: 30px; text-align: center; color: var(--text2); font-size: 14px; }
+/* ── paywall ── */
+.pay-wrap { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 50px 16px; background: var(--bg); }
+.pay-box { width: 100%; max-width: 400px; text-align: center; }
+.pay-title { font-family: 'Zen Kaku Gothic New', sans-serif; font-weight: 900; font-size: 20px; color: var(--navy); margin-bottom: 6px; }
+.pay-sub { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
+.pay-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; text-align: left; }
+.pay-role { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 6px; }
+.pay-amount { font-family: 'DM Mono', monospace; font-size: 30px; color: var(--navy); font-weight: 500; margin-bottom: 14px; }
+.pay-amount span { font-size: 12px; color: var(--text3); margin-left: 4px; }
+.pay-btn { width: 100%; padding: 13px; border: none; border-radius: 10px; background: var(--navy); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; }
+.pay-btn:disabled { opacity: 0.5; cursor: default; }
+.pay-msg { font-size: 12.5px; margin-top: 12px; padding: 8px 10px; border-radius: 8px; }
+.pay-msg.err { background: var(--rust-light); color: var(--rust); }
+.pay-logout { text-align: center; font-size: 11.5px; color: var(--text3); padding-top: 18px; cursor: pointer; text-decoration: underline; }
+.portal-link { text-align: center; font-size: 11.5px; color: var(--text3); cursor: pointer; text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -127,8 +142,11 @@ import {
   sendEmailVerification, onAuthStateChanged, signOut, reload
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, orderBy
+  getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, addDoc, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import {
+  getFunctions, httpsCallable
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-functions.js";
 import {
   initializeAppCheck, ReCaptchaEnterpriseProvider
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app-check.js";
@@ -148,6 +166,11 @@ initializeAppCheck(fbApp, {
 });
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
+const functions = getFunctions(fbApp, 'us-central1');
+const PRICE_IDS = {
+  student: 'price_1UAKbrBAZvKHyOEKfPuJriMp',
+  coach: 'price_1UAKcYBAZvKHyOEKu6JQAQMx'
+};
 const SITE_URL = location.href.split('?')[0];
 
 async function kvGet(key) {
@@ -324,7 +347,17 @@ onAuthStateChanged(auth, async (user) => {
         app.innerHTML = `<div class="err-screen">プロフィールが見つかりませんでした。サポートにご連絡ください。</div>`;
         return;
       }
-      boot(user, profSnap.data());
+      const profile = profSnap.data();
+      if (profile.freeAccess === true) {
+        boot(user, profile);
+        return;
+      }
+      const hasSub = await checkActiveSubscription(user.uid);
+      if (hasSub) {
+        boot(user, profile);
+      } else {
+        renderPaywall(user, profile);
+      }
     } catch (e) {
       app.innerHTML = `<div class="err-screen">読み込みに失敗しました：${e.message}</div>`;
     }
@@ -332,6 +365,82 @@ onAuthStateChanged(auth, async (user) => {
     renderAuth();
   }
 });
+
+async function checkActiveSubscription(uid) {
+  try {
+    const q = query(
+      collection(db, 'customers', uid, 'subscriptions'),
+      where('status', 'in', ['trialing', 'active'])
+    );
+    const snaps = await getDocs(q);
+    return !snaps.empty;
+  } catch (e) {
+    console.error('subscription check failed', e);
+    return false;
+  }
+}
+
+function renderPaywall(user, profile) {
+  const isCoach = profile.role === 'coach';
+  const priceId = isCoach ? PRICE_IDS.coach : PRICE_IDS.student;
+  const amount = isCoach ? '1,980' : '700';
+  const roleLabel = isCoach ? 'コーチプラン' : '生徒プラン';
+  app.innerHTML = `
+    <div class="pay-wrap"><div class="pay-box">
+      <div class="pay-title">GrowLogをはじめる</div>
+      <div class="pay-sub">${profile.displayName}さん、ご利用には月額プランへの加入が必要です</div>
+      <div class="pay-card">
+        <div class="pay-role">${roleLabel}</div>
+        <div class="pay-amount">¥${amount}<span>/ 月</span></div>
+        <button class="pay-btn" id="pay-btn">加入手続きに進む</button>
+        <div id="pay-msg"></div>
+      </div>
+      <div class="pay-logout" id="pay-logout">ログアウト</div>
+    </div></div>
+  `;
+  document.getElementById('pay-logout').onclick = () => signOut(auth);
+  document.getElementById('pay-btn').onclick = () => startCheckout(user.uid, priceId);
+}
+
+async function startCheckout(uid, priceId) {
+  const btn = document.getElementById('pay-btn');
+  const msg = document.getElementById('pay-msg');
+  btn.disabled = true;
+  btn.textContent = '処理中…';
+  try {
+    const sessionRef = await addDoc(collection(db, 'customers', uid, 'checkout_sessions'), {
+      price: priceId,
+      success_url: SITE_URL,
+      cancel_url: SITE_URL
+    });
+    onSnapshot(sessionRef, (snap) => {
+      const data = snap.data();
+      if (!data) return;
+      if (data.error) {
+        msg.innerHTML = `<div class="pay-msg err">エラーが発生しました：${data.error.message}</div>`;
+        btn.disabled = false;
+        btn.textContent = '加入手続きに進む';
+      }
+      if (data.url) {
+        window.location.assign(data.url);
+      }
+    });
+  } catch (e) {
+    msg.innerHTML = `<div class="pay-msg err">エラーが発生しました：${e.message}</div>`;
+    btn.disabled = false;
+    btn.textContent = '加入手続きに進む';
+  }
+}
+
+async function openPortal() {
+  try {
+    const createPortalLink = httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
+    const { data } = await createPortalLink({ returnUrl: SITE_URL });
+    window.location.assign(data.url);
+  } catch (e) {
+    alert('契約管理ページを開けませんでした：' + e.message);
+  }
+}
 
 function pad(n) { return String(n).padStart(2, '0'); }
 function dateKey(y, m, d) { return `${y}-${pad(m + 1)}-${pad(d)}`; }
@@ -380,9 +489,11 @@ async function boot(user, profile) {
         <div class="cal" id="cal"></div>
         <div class="panel" id="panel"></div>
         <div class="switch-code" id="logout-link">ログアウト</div>
+        <div class="portal-link" id="portal-link">プラン・支払い管理</div>
       </div>
     `;
     document.getElementById('logout-link').onclick = () => signOut(auth);
+    document.getElementById('portal-link').onclick = () => openPortal();
     document.getElementById('head-cal-btn').onclick = () => { state.calExpanded = !state.calExpanded; renderCalendar(); };
     if (isCoach) renderTabs();
     renderCalendar();
