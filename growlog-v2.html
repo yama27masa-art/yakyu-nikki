@@ -129,6 +129,9 @@ import {
 import {
   getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import {
+  initializeAppCheck, ReCaptchaEnterpriseProvider
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app-check.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDkhejPJk0Nu90dgbsbbhnUWgCHc0mTawM",
@@ -139,6 +142,10 @@ const firebaseConfig = {
   appId: "1:522594099909:web:17fcfb6f96580d6c1486ac"
 };
 const fbApp = initializeApp(firebaseConfig);
+initializeAppCheck(fbApp, {
+  provider: new ReCaptchaEnterpriseProvider('6Lfq2aAtAAAAAAHUaHQvytodWp76RbOp-1_Fvph9'),
+  isTokenAutoRefreshEnabled: true
+});
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 const SITE_URL = location.href.split('?')[0];
