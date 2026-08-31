@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GrowLog | 競技を問わない練習日記</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F5F3EE; --surface: #FFFFFF; --border: #E4DFD5; --border2: #D3CCBE;
+  --navy: #1B2A45; --navy2: #121E33; --text: #1C1914; --text2: #6E6A62; --text3: #A69F92;
+  --rust: #B5562C; --rust-light: #FBF0EA; --green: #3A6B4C; --green-light: #EEF4EF;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+.disp { font-family: 'Zen Kaku Gothic New', sans-serif; }
+.mono { font-family: 'DM Mono', monospace; }
+a { color: inherit; text-decoration: none; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+/* header */
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
+.logo { font-family: 'Zen Kaku Gothic New', sans-serif; font-weight: 900; font-size: 18px; color: var(--navy); }
+.logo span { color: var(--rust); }
+.topbar nav { display: flex; gap: 22px; font-size: 13px; color: var(--text2); }
+
+/* hero */
+.hero { padding: 60px 0 50px; border-bottom: 3px solid var(--rust); }
+.hero-eyebrow { font-size: 12.5px; color: var(--rust); font-weight: 700; margin-bottom: 14px; }
+.hero h1 { font-family: 'Zen Kaku Gothic New', sans-serif; font-weight: 900; font-size: 40px; line-height: 1.4; color: var(--navy); letter-spacing: 0.01em; max-width: 11em; }
+.hero p { margin-top: 20px; font-size: 15px; color: var(--text2); max-width: 32em; }
+.hero-cta { margin-top: 30px; display: flex; gap: 12px; flex-wrap: wrap; }
+.btn { display: inline-block; padding: 13px 22px; border-radius: 8px; font-size: 14px; font-weight: 700; }
+.btn-primary { background: var(--navy); color: #fff; }
+.btn-outline { border: 1px solid var(--border2); color: var(--navy); background: var(--surface); }
+
+/* stitch divider */
+.stitch { height: 1px; background-image: repeating-linear-gradient(90deg, var(--border2) 0 8px, transparent 8px 14px); margin: 0 0 60px; }
+
+/* who */
+.who { padding: 10px 0 50px; }
+.section-label { font-size: 12px; color: var(--text3); font-weight: 700; margin-bottom: 10px; }
+.who h2 { font-family: 'Zen Kaku Gothic New', sans-serif; font-weight: 700; font-size: 22px; color: var(--navy); margin-bottom: 22px; max-width: 14em; }
+.who-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.who-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.who-card .role { font-size: 13px; font-weight: 700; color: var(--rust); margin-bottom: 8px; }
+.who-card p { font-size: 13.5px; color: var(--text2); }
+
+/* features */
+.features { padding: 10px 0 60px; }
+.feature-row { display: flex; gap: 22px; padding: 26px 0; border-top: 1px solid var(--border); align-items: baseline; }
+.feature-row:last-child { border-bottom: 1px solid var(--border); }
+.feature-num { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text3); flex-shrink: 0; width: 2em; }
+.feature-body h3 { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+.feature-body p { font-size: 13.5px; color: var(--text2); max-width: 34em; }
+
+/* pricing */
+.pricing { padding: 10px 0 60px; }
+.pricing h2 { font-family: 'Zen Kaku Gothic New', sans-serif; font-weight: 700; font-size: 22px; color: var(--navy); margin-bottom: 22px; }
+.price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.price-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+.price-card .role { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 14px; }
+.price-card .amount { font-family: 'DM Mono', monospace; font-size: 32px; color: var(--navy); font-weight: 500; }
+.price-card .amount span { font-size: 13px; color: var(--text3); margin-left: 4px; }
+.price-card ul { margin-top: 16px; padding-left: 1.1em; }
+.price-card li { font-size: 13px; color: var(--text2); margin-bottom: 6px; }
+.price-note { margin-top: 14px; font-size: 12px; color: var(--text3); }
+
+/* footer */
+footer { border-top: 1px solid var(--border); padding: 30px 0 50px; }
+.footer-links { display: flex; gap: 20px; flex-wrap: wrap; font-size: 12.5px; color: var(--text2); margin-bottom: 16px; }
+.footer-name { font-size: 12px; color: var(--text3); }
+
+@media (max-width: 640px) {
+  .hero h1 { font-size: 30px; }
+  .who-grid, .price-grid { grid-template-columns: 1fr; }
+  .feature-row { gap: 14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="logo">Grow<span>Log</span></div>
+    <nav>
+      <a href="terms.html">利用規約</a>
+      <a href="privacy.html">プライバシー</a>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap hero">
+  <div class="hero-eyebrow">競技を問わない練習日記</div>
+  <h1>今日の練習を、<br>次の一歩に変える。</h1>
+  <p>野球でもサッカーでもバスケでも。選手が書いた今日の練習・目標・振り返りに、コーチがその場でコメントできる。それだけのシンプルな日記アプリです。</p>
+  <div class="hero-cta">
+    <a class="btn btn-primary" href="growlog-v2.html">はじめる</a>
+    <a class="btn btn-outline" href="#pricing">料金を見る</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="stitch"></div>
+</div>
+
+<div class="wrap who">
+  <div class="section-label">FOR</div>
+  <h2>選手とコーチ、両方のためのツール</h2>
+  <div class="who-grid">
+    <div class="who-card">
+      <div class="role">選手・生徒</div>
+      <p>その日の練習内容と、良かった点・改善点を書くだけ。目標も同じ画面でいつでも見返せます。</p>
+    </div>
+    <div class="who-card">
+      <div class="role">コーチ・指導者</div>
+      <p>担当する選手を一覧で切り替えながら、日記にコメントを返せます。指導のためのやり取りを一箇所に。</p>
+    </div>
+  </div>
+</div>
+
+<div class="wrap features">
+  <div class="section-label">FEATURES</div>
+  <div class="feature-row">
+    <div class="feature-num">01</div>
+    <div class="feature-body">
+      <h3>目標とやることリスト</h3>
+      <p>今の目標と、そのためにやることをいつでも編集できます。カレンダーの上に固定表示されるので、練習を書くたびに見返せます。</p>
+    </div>
+  </div>
+  <div class="feature-row">
+    <div class="feature-num">02</div>
+    <div class="feature-body">
+      <h3>練習・試合の記録</h3>
+      <p>練習メニューと良かった点・改善点、試合や実戦形式での振り返りを日付ごとに記録。カレンダーから過去の記録もすぐに開けます。</p>
+    </div>
+  </div>
+  <div class="feature-row">
+    <div class="feature-num">03</div>
+    <div class="feature-body">
+      <h3>コーチとのやり取り</h3>
+      <p>それぞれの日の記録に対して、コーチと選手がコメントをやり取りできます。書き込みがあったらLINEで知らせることもできます。</p>
+    </div>
+  </div>
+</div>
+
+<div class="wrap pricing" id="pricing">
+  <div class="section-label">PRICING</div>
+  <h2>料金</h2>
+  <div class="price-grid">
+    <div class="price-card">
+      <div class="role">生徒プラン</div>
+      <div class="amount">¥700<span>/ 月</span></div>
+      <ul>
+        <li>練習・試合の記録</li>
+        <li>目標管理</li>
+        <li>コーチとのやり取り</li>
+      </ul>
+    </div>
+    <div class="price-card">
+      <div class="role">コーチプラン</div>
+      <div class="amount">¥1,980<span>/ 月</span></div>
+      <ul>
+        <li>担当選手の記録の閲覧・コメント</li>
+        <li>選手ごとの切り替え表示</li>
+        <li>同じチームの他コーチとの共有</li>
+      </ul>
+    </div>
+  </div>
+  <div class="price-note">18歳未満の生徒会員は、保護者の登録が必須です。詳しくは利用規約をご覧ください。</div>
+</div>
+
+<div class="wrap">
+  <footer>
+    <div class="footer-links">
+      <a href="terms.html">利用規約</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+      <a href="#" id="contact-link-lp">お問い合わせ（準備中）</a>
+    </div>
+    <div class="footer-name">運営：GrowLog</div>
+  </footer>
+</div>
+
+</body>
+</html>
